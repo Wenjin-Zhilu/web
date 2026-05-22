@@ -23,6 +23,7 @@ const mentorNav: NavItem[] = [
   { href: "/dashboard/slots", label: "时间档期", matches: (p) => p.startsWith("/dashboard/slots") },
   { href: "/dashboard/orders", label: "订单", matches: (p) => p.startsWith("/dashboard/orders") },
   { href: "/dashboard/wallet", label: "钱包", matches: (p) => p.startsWith("/dashboard/wallet") },
+  { href: "/dashboard/invite", label: "邀请", matches: (p) => p.startsWith("/dashboard/invite") },
 ];
 
 export function Sidebar({

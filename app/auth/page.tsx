@@ -35,6 +35,7 @@ function AuthForm() {
   const role = searchParams.get("role") === "mentor" ? "mentor" : "parent";
   const initialMode = searchParams.get("mode") === "login" ? "login" : "register";
   const redirect = getSafeLocalRedirect(searchParams.get("redirect"));
+  const ref = searchParams.get("ref");
   const redirectQuery = encodeURIComponent(redirect);
   const isMentor = role === "mentor";
 
@@ -90,6 +91,7 @@ function AuthForm() {
             sessionStorage.setItem("verify_email", email);
             sessionStorage.setItem("auth_redirect", redirect);
             sessionStorage.setItem("auth_role", role);
+            if (ref) sessionStorage.setItem("auth_ref", ref);
             router.replace("/auth/verify");
             return;
           }
@@ -98,6 +100,7 @@ function AuthForm() {
           sessionStorage.setItem("verify_email", email);
           sessionStorage.setItem("auth_redirect", redirect);
           sessionStorage.setItem("auth_role", role);
+          if (ref) sessionStorage.setItem("auth_ref", ref);
           router.replace("/auth/verify");
         }
       } else {
@@ -115,6 +118,7 @@ function AuthForm() {
             sessionStorage.setItem("verify_email", email);
             sessionStorage.setItem("auth_redirect", redirect);
             sessionStorage.setItem("auth_role", role);
+            if (ref) sessionStorage.setItem("auth_ref", ref);
             router.replace("/auth/verify");
           } else {
             setError(signInError.message || "登录失败,请检查邮箱和密码");
