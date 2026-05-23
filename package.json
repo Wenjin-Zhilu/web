@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@shiguredo/rnnoise-wasm": "^2025.1.5",
     "@types/qrcode": "^1.5.6",
     "better-auth": "^1.6.11",
     "next": "16.2.6",

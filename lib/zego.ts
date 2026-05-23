@@ -1,4 +1,5 @@
 import type { ZegoExpressEngine } from "zego-express-engine-webrtc";
+import { createDenoisedStream } from "./denoise";
 
 type RoomUpdateType = "ADD" | "DELETE";
 type RoomUserInfo = { userID: string; userName?: string };
@@ -7,6 +8,8 @@ type ZegoEngineConstructor = new (appID: number, server: string | string[]) => Z
 
 let engine: ZegoExpressEngine | null = null;
 let localStream: MediaStream | null = null;
+let rawMicStream: MediaStream | null = null;
+let denoiseCleanup: (() => void) | null = null;
 let publishStreamID: string | null = null;
 let currentRoomID: string | null = null;
 let peerUserID: string | null = null;
@@ -40,23 +43,16 @@ export async function joinRoom(
   publishStreamID = `${roomID}_${userID}`;
   await engine.loginRoom(roomID, token, { userID, userName }, { userUpdate: true });
 
-  localStream = await engine.createStream({
-    camera: {
-      video: false,
-      audio: true,
-      ANS: true,
-      AGC: true,
-      AEC: true,
-    },
+  rawMicStream = await navigator.mediaDevices.getUserMedia({
+    audio: { echoCancellation: true, autoGainControl: true, noiseSuppression: true },
   });
 
-  // AI 降噪 — AIAggressive (2) 对键盘等持续噪声效果最好
-  try {
-    await (engine as any).enableAiDenoise(localStream, true);
-    await (engine as any).setAiDenoiseMode(localStream, 2);
-  } catch {
-    // AI 降噪需要 ZEGO 后台开通，未开通时静默降级到基础 ANS
-  }
+  const denoised = await createDenoisedStream(rawMicStream);
+  denoiseCleanup = denoised.cleanup;
+
+  localStream = await engine.createStream({
+    custom: { source: denoised.stream, audioBitrate: 48 },
+  });
 
   await engine.startPublishingStream(publishStreamID, localStream);
 }
@@ -76,6 +72,14 @@ export async function leaveRoom(roomID?: string): Promise<void> {
   if (localStream) {
     engine.destroyStream(localStream);
     localStream = null;
+  }
+  if (denoiseCleanup) {
+    denoiseCleanup();
+    denoiseCleanup = null;
+  }
+  if (rawMicStream) {
+    rawMicStream.getTracks().forEach((t) => t.stop());
+    rawMicStream = null;
   }
   if (publishStreamID) {
     engine.stopPublishingStream(publishStreamID);
@@ -174,6 +178,14 @@ export function destroy(): void {
   }
   localStream = null;
   remoteStream = null;
+  if (denoiseCleanup) {
+    denoiseCleanup();
+    denoiseCleanup = null;
+  }
+  if (rawMicStream) {
+    rawMicStream.getTracks().forEach((t) => t.stop());
+    rawMicStream = null;
+  }
   publishStreamID = null;
   currentRoomID = null;
   peerUserID = null;
