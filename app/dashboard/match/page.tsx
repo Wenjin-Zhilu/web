@@ -182,11 +182,12 @@ export default function MatchPage() {
                 style={{ textDecoration: "none", position: "relative" }}
               >
                 <div className={styles.cardBanner} style={{ background: accent }} />
-                <div className={styles.verifiedBadge} title="已验证身份">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <div className={styles.verifiedBadge} title="已通过身份审核">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                     <circle cx="12" cy="12" r="10" fill="#1d9bf0" />
                     <path d="M8 12.5 L11 15.5 L16.5 9" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
+                  <span>已通过身份审核</span>
                 </div>
                 <h3 className={styles.cardTitle}>
                   {m.name || "匿名学长学姐"} · {m.school || "—"}

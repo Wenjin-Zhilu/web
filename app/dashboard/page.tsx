@@ -284,9 +284,11 @@ function ParentOverview({
   const upcoming = orders.filter((o) => o.status === "scheduled" || o.status === "in_call");
   const done = orders.filter((o) => o.status === "completed" || o.status === "reviewed");
 
+  const needsOnboarding = !profile || !profile.parentRole || !profile.province || !profile.stage || !profile.highSchool;
+
   return (
     <>
-      {!profile && (
+      {needsOnboarding && (
         <ParentOnboardingModal accent={accent} onDone={onProfileCreated} />
       )}
 

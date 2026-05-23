@@ -182,8 +182,15 @@ export default function MentorDetailPage() {
       </div>
       <div className={styles.content}>
         {/* 头部信息卡 */}
-        <div className={styles.card}>
+        <div className={styles.card} style={{ position: "relative" }}>
           <div className={styles.cardBanner} style={{ background: ACCENT }} />
+          <div className={styles.verifiedBadge} title="已通过身份审核">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" fill="#1d9bf0" />
+              <path d="M8 12.5 L11 15.5 L16.5 9" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span>已通过身份审核</span>
+          </div>
           <h1 className={styles.pageTitle} style={{ marginBottom: 4 }}>
             {mentor.name}
           </h1>
