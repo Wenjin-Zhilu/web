@@ -40,7 +40,24 @@ export async function joinRoom(
   publishStreamID = `${roomID}_${userID}`;
   await engine.loginRoom(roomID, token, { userID, userName }, { userUpdate: true });
 
-  localStream = await engine.createStream({ camera: { video: false, audio: true } });
+  localStream = await engine.createStream({
+    camera: {
+      video: false,
+      audio: true,
+      ANS: true,
+      AGC: true,
+      AEC: true,
+    },
+  });
+
+  // AI 降噪 — AIAggressive (2) 对键盘等持续噪声效果最好
+  try {
+    await (engine as any).enableAiDenoise(localStream, true);
+    await (engine as any).setAiDenoiseMode(localStream, 2);
+  } catch {
+    // AI 降噪需要 ZEGO 后台开通，未开通时静默降级到基础 ANS
+  }
+
   await engine.startPublishingStream(publishStreamID, localStream);
 }
 
