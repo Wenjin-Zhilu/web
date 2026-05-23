@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { apiGet, formatDateTime } from "@/lib/api";
-import { authClient } from "@/lib/auth-client";
+import { useSession } from "@/lib/auth-client";
 import styles from "../dashboard.module.css";
 
 const accent = "#3d5c4d";
@@ -25,7 +25,7 @@ const statusMap: Record<string, { label: string; cls: string }> = {
 };
 
 export default function InvitePage() {
-  const { data: session, isPending } = authClient.useSession();
+  const { data: session, isPending } = useSession();
   const [info, setInfo] = useState<InviteInfo | null>(null);
   const [invitees, setInvitees] = useState<Invitee[]>([]);
   const [loading, setLoading] = useState(true);

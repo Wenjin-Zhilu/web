@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { apiGet, apiSend, ApiError, formatDateTime } from "@/lib/api";
-import { authClient } from "@/lib/auth-client";
+import { useSession } from "@/lib/auth-client";
 import styles from "../dashboard.module.css";
 
 type Slot = {
@@ -43,7 +43,7 @@ function buildHourRange(day: Date, hStart: number, hEnd: number): Date[] {
 }
 
 export default function SlotsPage() {
-  const { data: session } = authClient.useSession();
+  const { data: session } = useSession();
   const [slots, setSlots] = useState<Slot[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDay, setSelectedDay] = useState<Date>(() => {

@@ -4,7 +4,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { authClient } from "@/lib/auth-client";
+import { useSession } from "@/lib/auth-client";
 import { apiGet, apiSend, ApiError } from "@/lib/api";
 import { defaultIntroCard, mergeIntroCard, type IntroCard } from "@/lib/intro-card-schema";
 import dashboardStyles from "../dashboard/dashboard.module.css";
@@ -32,7 +32,7 @@ const accent = "#3d5c4d";
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const { data: session, isPending } = authClient.useSession();
+  const { data: session, isPending } = useSession();
 
   const [profile, setProfile] = useState<MentorProfile | null>(null);
   const [loaded, setLoaded] = useState(false);

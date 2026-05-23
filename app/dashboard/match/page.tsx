@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
-import { authClient } from "@/lib/auth-client";
+import { useSession } from "@/lib/auth-client";
 import { apiGet } from "@/lib/api";
 import styles from "../dashboard.module.css";
 
@@ -21,7 +21,7 @@ type MentorListItem = {
 };
 
 export default function MatchPage() {
-  const { data: session, isPending } = authClient.useSession();
+  const { data: session, isPending } = useSession();
   const [mentors, setMentors] = useState<MentorListItem[]>([]);
   const [loading, setLoading] = useState(true);
 

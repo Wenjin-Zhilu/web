@@ -2,13 +2,17 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { authClient } from "@/lib/auth-client";
+import { parentAuthClient, mentorAuthClient } from "@/lib/auth-client";
 import { Sidebar } from "./_components/Sidebar";
 import styles from "./dashboard.module.css";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { data: session, isPending } = authClient.useSession();
+  const { data: parentSession, isPending: parentPending } = parentAuthClient.useSession();
+  const { data: mentorSession, isPending: mentorPending } = mentorAuthClient.useSession();
+
+  const isPending = parentPending || mentorPending;
+  const session = mentorSession || parentSession;
 
   useEffect(() => {
     if (!isPending && !session) {

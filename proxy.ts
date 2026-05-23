@@ -88,21 +88,25 @@ export async function proxy(request: NextRequest) {
 
   if (isProtected || isAuthPage) {
     let isLoggedIn = false;
+    const isMentorContext = host === "mentor.wenjin-zhilu.com";
+    const sessionEndpoints = isMentorContext
+      ? ["/api/mauth/get-session"]
+      : ["/api/auth/get-session"];
+    if (isProtected) {
+      sessionEndpoints.push(isMentorContext ? "/api/auth/get-session" : "/api/mauth/get-session");
+    }
 
-    try {
-      const sessionRes = await fetch(new URL("/api/auth/get-session", publicOrigin), {
-        headers: {
-          cookie: request.headers.get("cookie") || "",
-        },
-        cache: "no-store",
-      });
-
-      if (sessionRes.ok) {
-        const data = await sessionRes.json();
-        isLoggedIn = !!data?.user;
-      }
-    } catch {
-      // If API is unreachable, treat as not logged in
+    for (const endpoint of sessionEndpoints) {
+      try {
+        const sessionRes = await fetch(new URL(endpoint, publicOrigin), {
+          headers: { cookie: request.headers.get("cookie") || "" },
+          cache: "no-store",
+        });
+        if (sessionRes.ok) {
+          const data = await sessionRes.json();
+          if (data?.user) { isLoggedIn = true; break; }
+        }
+      } catch {}
     }
 
     // Protected routes: redirect to /auth if not logged in

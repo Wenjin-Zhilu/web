@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { authClient } from "@/lib/auth-client";
+import { getAuthClient } from "@/lib/auth-client";
 import { api } from "@/lib/api";
 import styles from "./verify.module.css";
 
@@ -26,10 +26,12 @@ export default function VerifyPage() {
     if (typeof window === "undefined") return "";
     return sessionStorage.getItem("verify_email") || "";
   });
-  const [accent] = useState(() => {
-    if (typeof window === "undefined") return "#b8472d";
-    return sessionStorage.getItem("auth_role") === "mentor" ? "#3d5c4d" : "#b8472d";
+  const [role] = useState(() => {
+    if (typeof window === "undefined") return "parent" as const;
+    return sessionStorage.getItem("auth_role") === "mentor" ? "mentor" as const : "parent" as const;
   });
+  const accent = role === "mentor" ? "#3d5c4d" : "#b8472d";
+  const authClient = getAuthClient(role);
   const [countdown, setCountdown] = useState(60);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const verifyingRef = useRef(false);

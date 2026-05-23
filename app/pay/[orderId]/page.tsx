@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import QRCode from "qrcode";
 import { apiGet, apiSend, formatCents, ApiError } from "@/lib/api";
-import { authClient } from "@/lib/auth-client";
+import { useSession } from "@/lib/auth-client";
 
 type PaymentStatus = "unpaid" | "waiting" | "paid" | "closed" | "refunded";
 
@@ -25,7 +25,7 @@ type OrderDetail = {
 export default function PayPage({ params }: { params: Promise<{ orderId: string }> }) {
   const { orderId } = use(params);
   const router = useRouter();
-  const { data: session } = authClient.useSession();
+  const { data: session } = useSession();
   const [detail, setDetail] = useState<OrderDetail | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [qrText, setQrText] = useState<string | null>(null);

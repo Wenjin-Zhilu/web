@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { authClient } from "@/lib/auth-client";
+import { getAuthClient } from "@/lib/auth-client";
 import styles from "../auth.module.css";
 
 function ForgotPasswordForm() {
@@ -12,6 +12,7 @@ function ForgotPasswordForm() {
   const role = searchParams.get("role") === "mentor" ? "mentor" : "parent";
   const isMentor = role === "mentor";
   const accentColor = isMentor ? "#3d5c4d" : "#b8472d";
+  const authClient = getAuthClient(role);
 
   const [step, setStep] = useState<"email" | "reset">("email");
   const [email, setEmail] = useState("");

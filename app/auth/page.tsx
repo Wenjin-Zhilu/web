@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { authClient } from "@/lib/auth-client";
+import { getAuthClient } from "@/lib/auth-client";
 import { Suspense } from "react";
 import styles from "./auth.module.css";
 
@@ -37,6 +37,7 @@ function AuthForm() {
   const ref = searchParams.get("ref");
   const redirectQuery = encodeURIComponent(redirect);
   const isMentor = role === "mentor";
+  const authClient = getAuthClient(role);
 
   const [mode, setMode] = useState<"login" | "register">(initialMode);
   const [email, setEmail] = useState("");

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { apiGet, apiSend, formatCents, formatDateTime, ApiError } from "@/lib/api";
-import { authClient } from "@/lib/auth-client";
+import { useSession } from "@/lib/auth-client";
 import styles from "../dashboard.module.css";
 
 type Earnings = {
@@ -28,7 +28,7 @@ type Withdrawal = {
 const accent = "#3d5c4d";
 
 export default function WalletPage() {
-  const { data: session, isPending } = authClient.useSession();
+  const { data: session, isPending } = useSession();
   const [earnings, setEarnings] = useState<Earnings | null>(null);
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [minCents, setMinCents] = useState(5000);

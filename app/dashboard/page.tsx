@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { authClient } from "@/lib/auth-client";
+import { useSession } from "@/lib/auth-client";
 import { apiGet, apiSend, formatCents, formatDateTime, ApiError } from "@/lib/api";
 import styles from "./dashboard.module.css";
 
@@ -78,7 +78,7 @@ type SlotLite = {
 };
 
 export default function DashboardPage() {
-  const { data: session, isPending } = authClient.useSession();
+  const { data: session, isPending } = useSession();
   const [me, setMe] = useState<MeProfile | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [earnings, setEarnings] = useState<Earnings | null>(null);

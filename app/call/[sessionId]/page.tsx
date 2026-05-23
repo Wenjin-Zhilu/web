@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useCallback } from "react";
-import { authClient } from "@/lib/auth-client";
+import { useSession } from "@/lib/auth-client";
 import * as zego from "@/lib/zego";
 import * as callRecorder from "@/lib/call-recorder";
 import styles from "./call.module.css";
@@ -24,7 +24,7 @@ export default function CallPage() {
   const router = useRouter();
   const sessionId = params.sessionId as string;
 
-  const { data: session, isPending } = authClient.useSession();
+  const { data: session, isPending } = useSession();
   const [callState, setCallState] = useState<CallState>("loading");
   const [elapsed, setElapsed] = useState(0);
   const [durationMins, setDurationMins] = useState(30);

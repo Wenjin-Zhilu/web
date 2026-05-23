@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { authClient } from "@/lib/auth-client";
+import { signOutAll } from "@/lib/auth-client";
 import styles from "../dashboard.module.css";
 
 export type NavItem = {
@@ -48,7 +48,7 @@ export function Sidebar({
   const brandChar = role === "mentor" ? "路" : "问";
 
   const signOut = async () => {
-    await authClient.signOut();
+    await signOutAll();
     router.push("/");
   };
 

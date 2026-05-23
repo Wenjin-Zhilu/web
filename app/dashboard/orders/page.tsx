@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { apiGet, formatCents, formatDateTime } from "@/lib/api";
-import { authClient } from "@/lib/auth-client";
+import { useSession } from "@/lib/auth-client";
 import styles from "../dashboard.module.css";
 import { OrderStatusPill } from "../page";
 
@@ -27,7 +27,7 @@ type Order = {
 };
 
 export default function OrdersListPage() {
-  const { data: session } = authClient.useSession();
+  const { data: session } = useSession();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const role = ((session?.user as { role?: string } | undefined)?.role ?? "parent") as

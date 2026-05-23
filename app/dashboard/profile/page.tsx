@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { apiGet, apiSend, ApiError } from "@/lib/api";
-import { authClient } from "@/lib/auth-client";
+import { useSession } from "@/lib/auth-client";
 import { mergeIntroCard, type IntroCard } from "@/lib/intro-card-schema";
 import {
   Step1Basic,
@@ -54,7 +54,7 @@ type MeProfile = {
 };
 
 export default function ProfilePage() {
-  const { data: session } = authClient.useSession();
+  const { data: session } = useSession();
   const sessionUserId = session?.user?.id;
   const [me, setMe] = useState<MeProfile | null>(null);
 
