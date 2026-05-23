@@ -190,6 +190,9 @@ export default function SlotsPage() {
         <p className={styles.pageSub}>
           点击时间格切换开放 / 不开放。每个时段 30 分钟，保存后家长就可以预订。
         </p>
+        <p style={{ marginTop: 8, color: "#b8472d", fontSize: 13 }}>
+          请为自己开放的时段负责：一旦被家长预订，将无法取消。
+        </p>
 
         {msg && (
           <div className={msg.kind === "ok" ? styles.alertOk : styles.alertBad} style={{ marginBottom: 16 }}>

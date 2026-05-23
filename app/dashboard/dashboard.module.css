@@ -230,6 +230,38 @@
   margin-top: 6px;
 }
 
+/* Hero card — next upcoming consultation */
+.cardHero {
+  background: #f0f7f1;
+  border: 1px solid #cfe5d2;
+  border-left: 4px solid #3d5c4d;
+  border-radius: 10px;
+  padding: 22px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  text-decoration: none;
+  transition: background 0.12s ease;
+}
+.cardHero:hover {
+  background: #e6f0e7;
+}
+.cardHeroTitle {
+  font-family: var(--serif);
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f1f1f;
+  margin: 0 0 4px;
+}
+.cardHeroArrow {
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: #3d5c4d;
+  white-space: nowrap;
+}
+
 /* Status pills */
 .pill {
   display: inline-flex;
@@ -400,6 +432,18 @@
   .grid2,
   .grid3 {
     grid-template-columns: 1fr;
+  }
+
+  .cardHero {
+    padding: 16px 18px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .cardHeroTitle {
+    font-size: 16px;
+  }
+  .cardHeroArrow {
+    align-self: flex-end;
   }
 
   .shell {

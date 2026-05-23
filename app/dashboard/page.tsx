@@ -418,26 +418,50 @@ function MentorOverview({
         {upcoming.length === 0 ? (
           <div className={styles.emptyState}>暂时没有待开始的咨询。</div>
         ) : (
-          <div className={styles.grid2}>
-            {upcoming.map((o) => (
-              <Link
-                key={o.id}
-                href={`/dashboard/orders/${o.id}`}
-                className={styles.card}
-                style={{ textDecoration: "none" }}
-              >
-                <h3 className={styles.cardTitle}>{o.topic?.slice(0, 40) || "咨询订单"}</h3>
+          <>
+            <Link
+              href={`/dashboard/orders/${upcoming[0].id}`}
+              className={styles.cardHero}
+            >
+              <div>
+                <h3 className={styles.cardHeroTitle}>
+                  {upcoming[0].topic?.slice(0, 60) || "咨询订单"}
+                </h3>
                 <p className={styles.cardSub}>
-                  下单于 {formatDateTime(o.createdAt)} · <OrderStatusPill status={o.status} />
+                  下单于 {formatDateTime(upcoming[0].createdAt)} ·{" "}
+                  <OrderStatusPill status={upcoming[0].status} />
                 </p>
-                {o.mentorPayoutCents != null && (
+                {upcoming[0].mentorPayoutCents != null && (
                   <p style={{ fontSize: 13, color: "#4a4a45", marginTop: 6 }}>
-                    {formatCents(o.mentorPayoutCents)}
+                    {formatCents(upcoming[0].mentorPayoutCents)}
                   </p>
                 )}
-              </Link>
-            ))}
-          </div>
+              </div>
+              <span className={styles.cardHeroArrow}>进入咨询 ›</span>
+            </Link>
+            {upcoming.length > 1 && (
+              <div className={styles.grid2} style={{ marginTop: 16 }}>
+                {upcoming.slice(1).map((o) => (
+                  <Link
+                    key={o.id}
+                    href={`/dashboard/orders/${o.id}`}
+                    className={styles.card}
+                    style={{ textDecoration: "none" }}
+                  >
+                    <h3 className={styles.cardTitle}>{o.topic?.slice(0, 40) || "咨询订单"}</h3>
+                    <p className={styles.cardSub}>
+                      下单于 {formatDateTime(o.createdAt)} · <OrderStatusPill status={o.status} />
+                    </p>
+                    {o.mentorPayoutCents != null && (
+                      <p style={{ fontSize: 13, color: "#4a4a45", marginTop: 6 }}>
+                        {formatCents(o.mentorPayoutCents)}
+                      </p>
+                    )}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
     </>
