@@ -94,8 +94,7 @@ export function onRoomUserUpdate(
 
 function isPeerStream(stream: StreamInfo): boolean {
   if (!stream.streamID || stream.streamID === publishStreamID) return false;
-  if (stream.user?.userID) return stream.user.userID === peerUserID;
-  return !!currentRoomID && !!peerUserID && stream.streamID === `${currentRoomID}_${peerUserID}`;
+  return true;
 }
 
 export function onRoomStreamUpdate(

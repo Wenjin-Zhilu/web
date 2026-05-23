@@ -133,6 +133,22 @@ export default function CallPage() {
       await zego.createEngine(data.appID);
       if (cancelled) return;
 
+      let recordingRetryTimer: ReturnType<typeof setTimeout> | null = null;
+      const tryStartRecording = () => {
+        if (callRecorder.isRecording() || endedRef.current) return;
+        const localS = zego.getLocalStream();
+        const remoteS = zego.getRemoteStream();
+        if (localS && remoteS) {
+          callRecorder.startRecording(localS, remoteS);
+          setRecording(true);
+        } else if (!recordingRetryTimer) {
+          recordingRetryTimer = setTimeout(() => {
+            recordingRetryTimer = null;
+            tryStartRecording();
+          }, 1000);
+        }
+      };
+
       const startCall = async () => {
         if (cancelled || endedRef.current) return;
 
@@ -156,14 +172,7 @@ export default function CallPage() {
           }, 1000);
         }
 
-        if (!callRecorder.isRecording()) {
-          const localS = zego.getLocalStream();
-          const remoteS = zego.getRemoteStream();
-          if (localS && remoteS) {
-            callRecorder.startRecording(localS, remoteS);
-            setRecording(true);
-          }
-        }
+        tryStartRecording();
 
         if (startReportSentRef.current || startReportInFlightRef.current) return;
 
@@ -241,6 +250,7 @@ export default function CallPage() {
       cancelled = true;
       if (timerRef.current) clearInterval(timerRef.current);
       if (statusPollRef.current) clearInterval(statusPollRef.current);
+      if (recordingRetryTimer) clearTimeout(recordingRetryTimer);
       void zego.leaveRoom(roomIdRef.current);
       zego.destroy();
     };
