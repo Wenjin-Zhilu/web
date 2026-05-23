@@ -60,6 +60,7 @@ type Detail = {
   slot: Slot | null;
   mentor: Mentor | null;
   parent: { id: string; name: string | null } | null;
+  callSummary: { transcript: string | null; summary: string | null } | null;
 };
 
 export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -71,6 +72,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const [busy, setBusy] = useState<string | null>(null);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewText, setReviewText] = useState("");
+  const [showTranscript, setShowTranscript] = useState(false);
 
   const userId = (session?.user as { id?: string } | undefined)?.id;
   const role = ((session?.user as { role?: string } | undefined)?.role ?? "parent") as
@@ -98,7 +100,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     return <div style={{ padding: 32, color: "#6e6e68" }}>加载中…</div>;
   }
 
-  const { order, slot, mentor, parent } = detail;
+  const { order, slot, mentor, parent, callSummary } = detail;
   const isParent = userId === order.parentId;
   const counterpart = isParent ? mentor : parent;
   const counterpartTitle = isParent ? "学长 / 学姐" : "家长 / 学生";
@@ -226,6 +228,51 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             <div className={styles.card} style={{ marginTop: 8, whiteSpace: "pre-wrap", fontSize: 14, color: "#1f1f1f", lineHeight: 1.7 }}>
               {order.topic}
             </div>
+          </div>
+        )}
+
+        {callSummary?.summary && (
+          <div className={styles.section}>
+            <h2 className={styles.sectionTitle}>AI 通话摘要</h2>
+            <div
+              className={styles.card}
+              style={{ marginTop: 8, whiteSpace: "pre-wrap", fontSize: 14, color: "#1f1f1f", lineHeight: 1.8 }}
+            >
+              {callSummary.summary}
+            </div>
+            {callSummary.transcript && (
+              <div style={{ marginTop: 12 }}>
+                <button
+                  onClick={() => setShowTranscript(!showTranscript)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: accent,
+                    fontSize: 13,
+                    cursor: "pointer",
+                    padding: 0,
+                  }}
+                >
+                  {showTranscript ? "收起转写文本" : "查看完整转写文本"}
+                </button>
+                {showTranscript && (
+                  <div
+                    className={styles.card}
+                    style={{
+                      marginTop: 8,
+                      whiteSpace: "pre-wrap",
+                      fontSize: 13,
+                      color: "#4a4a45",
+                      lineHeight: 1.8,
+                      maxHeight: 400,
+                      overflow: "auto",
+                    }}
+                  >
+                    {callSummary.transcript}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
