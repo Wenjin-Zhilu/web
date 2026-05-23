@@ -545,6 +545,25 @@
   font-size: 13px;
 }
 
+/* Verified badge */
+.verifiedBadge {
+  position: absolute;
+  top: 64px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #1d9bf0;
+  font-weight: 500;
+}
+@media (max-width: 760px) {
+  .verifiedBadge {
+    top: 52px;
+    right: 12px;
+  }
+}
+
 /* Filter bar */
 .filterSection {
   margin-top: 24px;

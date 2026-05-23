@@ -26,7 +26,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const user = session.user as { name?: string; email?: string; role?: string };
   const role = (user.role as "parent" | "mentor") || "parent";
   const accent = role === "mentor" ? "#3d5c4d" : "#b8472d";
-  const side = role === "mentor" ? "指路 · 后台" : "问津 · 后台";
+  const side = role === "mentor" ? "指路" : "问津";
 
   return (
     <div className={styles.shell}>

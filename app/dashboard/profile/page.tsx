@@ -349,14 +349,6 @@ const STAGE_LABEL: Record<string, string> = {
   gap: "Gap",
   other: "其他",
 };
-const TILT_LABEL: Record<string, string> = {
-  employment: "就业导向",
-  grad_school: "升学 / 保研",
-  overseas: "出国",
-  experience: "体验为主",
-  undecided: "尚未确定",
-};
-
 function ParentProfileView({ profile }: { profile: ParentProfile | null }) {
   const accent = "#b8472d";
 
@@ -374,13 +366,13 @@ function ParentProfileView({ profile }: { profile: ParentProfile | null }) {
         {profile ? (
           <div className={styles.grid2}>
             <InfoCard label="身份" value={profile.parentRole ? PARENT_ROLE_LABEL[profile.parentRole] || profile.parentRole : "—"} />
-            <InfoCard label="所在省份" value={profile.province || "—"} />
+            <InfoCard label="高考地区" value={profile.province || "—"} />
             <InfoCard label="阶段" value={profile.stage ? STAGE_LABEL[profile.stage] || profile.stage : "—"} />
-            <InfoCard label="升学倾向" value={profile.tilt ? TILT_LABEL[profile.tilt] || profile.tilt : "—"} />
+            <InfoCard label="高中学校" value={(profile as Record<string, unknown>).highSchool as string || "—"} />
           </div>
         ) : (
           <div className={styles.emptyState} style={{ marginTop: 16 }}>
-            暂无资料。你可以直接在概览页浏览和筛选学长学姐。
+            暂无资料。返回概览页会弹出资料填写弹窗。
           </div>
         )}
       </div>

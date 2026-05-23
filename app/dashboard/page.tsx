@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
-import { apiGet, formatCents, formatDateTime, ApiError } from "@/lib/api";
+import { apiGet, apiSend, formatCents, formatDateTime, ApiError } from "@/lib/api";
 import styles from "./dashboard.module.css";
 
 type IntroCard = {
@@ -35,6 +35,7 @@ type ParentProfile = {
   parentRole: string | null;
   province: string | null;
   stage: string | null;
+  highSchool: string | null;
   intendedMajors: string[] | null;
   focusAreas: string[] | null;
   tilt: string | null;
@@ -65,20 +66,6 @@ type Order = {
   createdAt: string;
 };
 
-type MentorListItem = {
-  id: string;
-  name: string;
-  school: string | null;
-  college: string | null;
-  major: string | null;
-  year: string | null;
-  bio: string | null;
-  tags: string[] | null;
-  ratingAvg: string;
-  reviewsCount: number;
-  majorCategory: string | null;
-};
-
 type Earnings = {
   settledCents: number;
   pendingCents: number;
@@ -94,7 +81,6 @@ export default function DashboardPage() {
   const { data: session, isPending } = authClient.useSession();
   const [me, setMe] = useState<MeProfile | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [mentors, setMentors] = useState<MentorListItem[]>([]);
   const [earnings, setEarnings] = useState<Earnings | null>(null);
   const [openFutureSlots, setOpenFutureSlots] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
@@ -116,10 +102,7 @@ export default function DashboardPage() {
         setOrders(ordersRes.orders);
 
         if (role === "parent") {
-          const m = await apiGet<{ mentors: MentorListItem[] }>("/api/mentors").catch(() => ({
-            mentors: [] as MentorListItem[],
-          }));
-          if (!cancel) setMentors(m.mentors);
+          // mentors loaded on /dashboard/match page
         } else {
           const e = await apiGet<Earnings>("/api/mentors/me/earnings").catch(() => null);
           if (!cancel && e) setEarnings(e);
@@ -168,9 +151,10 @@ export default function DashboardPage() {
 
         {role === "parent" ? (
           <ParentOverview
+            profile={me.parentProfile ?? null}
             orders={orders}
-            mentors={mentors}
             accent={accent}
+            onProfileCreated={(p) => setMe({ ...me, parentProfile: p })}
           />
         ) : (
           <MentorOverview
@@ -188,64 +172,124 @@ export default function DashboardPage() {
 
 // ── Parent ─────────────────────────────────────────────────────────────
 
-function ParentOverview({
-  orders,
-  mentors,
+const ROLE_OPTS = ["学生本人", "家长", "老师", "其他"];
+const ROLE_TO_ENUM: Record<string, string> = { "学生本人": "student", "家长": "parent", "老师": "teacher", "其他": "other" };
+const STAGE_OPTS = ["高三 · 出分前", "高三 · 出分后", "高一 / 高二", "复读", "其他"];
+const STAGE_TO_ENUM: Record<string, string> = { "高三 · 出分前": "senior_pre", "高三 · 出分后": "senior_post", "高一 / 高二": "g10_g11", "复读": "gap", "其他": "other" };
+
+function ParentOnboardingModal({
   accent,
+  onDone,
 }: {
-  orders: Order[];
-  mentors: MentorListItem[];
   accent: string;
+  onDone: (p: ParentProfile) => void;
+}) {
+  const [role, setRole] = useState("");
+  const [province, setProvince] = useState("");
+  const [stage, setStage] = useState("");
+  const [highSchool, setHighSchool] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const canSubmit = role && province.trim() && stage && highSchool.trim();
+
+  const submit = async () => {
+    if (!canSubmit) return;
+    setSaving(true);
+    setError("");
+    try {
+      const res = await apiSend<{ profileId: string }>("/api/parent-profile", "POST", {
+        parentRole: ROLE_TO_ENUM[role],
+        province: province.trim(),
+        stage: STAGE_TO_ENUM[stage],
+        highSchool: highSchool.trim(),
+      });
+      onDone({
+        id: res.profileId,
+        parentRole: ROLE_TO_ENUM[role],
+        province: province.trim(),
+        stage: STAGE_TO_ENUM[stage],
+        highSchool: highSchool.trim(),
+        intendedMajors: null,
+        focusAreas: null,
+        tilt: null,
+      });
+    } catch (e) {
+      setError((e as Error).message || "保存失败");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 16 }}>
+      <div style={{ background: "#fff", borderRadius: 12, padding: 28, maxWidth: 420, width: "100%" }}>
+        <h2 style={{ fontSize: 18, fontWeight: 600, margin: "0 0 4px", fontFamily: "var(--serif)" }}>完善资料</h2>
+        <p style={{ fontSize: 13, color: "#6e6e68", margin: "0 0 20px" }}>填写以下信息，帮助我们更好地为你匹配学长学姐。</p>
+
+        <div className={styles.field}>
+          <label className={styles.label}>你是？</label>
+          <div className={styles.filterPills}>
+            {ROLE_OPTS.map((r) => (
+              <button key={r} type="button" className={`${styles.filterPill} ${role === r ? styles.filterPillActive : ""}`} onClick={() => setRole(r)}>{r}</button>
+            ))}
+          </div>
+        </div>
+
+        <div className={styles.field}>
+          <label className={styles.label}>高考地区</label>
+          <input className={styles.input} placeholder="例如：上海、浙江、江苏…" value={province} onChange={(e) => setProvince(e.target.value)} />
+        </div>
+
+        <div className={styles.field}>
+          <label className={styles.label}>目前阶段</label>
+          <div className={styles.filterPills}>
+            {STAGE_OPTS.map((s) => (
+              <button key={s} type="button" className={`${styles.filterPill} ${stage === s ? styles.filterPillActive : ""}`} onClick={() => setStage(s)}>{s}</button>
+            ))}
+          </div>
+        </div>
+
+        <div className={styles.field}>
+          <label className={styles.label}>高中学校</label>
+          <input className={styles.input} placeholder="例如：上海中学、复旦附中…" value={highSchool} onChange={(e) => setHighSchool(e.target.value)} />
+        </div>
+
+        {error && <p style={{ color: "#a4391a", fontSize: 13, marginBottom: 10 }}>{error}</p>}
+
+        <button
+          className={`${styles.btn} ${styles.btnPrimary}`}
+          style={{ background: accent, width: "100%", justifyContent: "center", marginTop: 4 }}
+          disabled={!canSubmit || saving}
+          onClick={submit}
+        >
+          {saving ? "保存中…" : "开始使用"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ParentOverview({
+  profile,
+  orders,
+  accent,
+  onProfileCreated,
+}: {
+  profile: ParentProfile | null;
+  orders: Order[];
+  accent: string;
+  onProfileCreated: (p: ParentProfile) => void;
 }) {
   const upcoming = orders.filter((o) => o.status === "scheduled" || o.status === "in_call");
   const done = orders.filter((o) => o.status === "completed" || o.status === "reviewed");
 
-  const [selectedSchool, setSelectedSchool] = useState("");
-  const [selectedCollege, setSelectedCollege] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("");
-
-  const uniqueSchools = useMemo(
-    () => [...new Set(mentors.map((m) => m.school).filter(Boolean))] as string[],
-    [mentors],
-  );
-
-  const afterSchool = selectedSchool
-    ? mentors.filter((m) => m.school === selectedSchool)
-    : mentors;
-
-  const uniqueColleges = useMemo(
-    () => [...new Set(afterSchool.map((m) => m.college).filter(Boolean))] as string[],
-    [afterSchool],
-  );
-
-  const afterCollege = selectedCollege
-    ? afterSchool.filter((m) => m.college === selectedCollege)
-    : afterSchool;
-
-  const uniqueCategories = useMemo(
-    () => [...new Set(afterCollege.map((m) => m.majorCategory).filter(Boolean))] as string[],
-    [afterCollege],
-  );
-
-  const filteredMentors = selectedCategory
-    ? afterCollege.filter((m) => m.majorCategory === selectedCategory)
-    : afterCollege;
-
-  const handleSchool = (v: string) => {
-    setSelectedSchool(v === selectedSchool ? "" : v);
-    setSelectedCollege("");
-    setSelectedCategory("");
-  };
-  const handleCollege = (v: string) => {
-    setSelectedCollege(v === selectedCollege ? "" : v);
-    setSelectedCategory("");
-  };
-  const handleCategory = (v: string) => {
-    setSelectedCategory(v === selectedCategory ? "" : v);
-  };
-
   return (
     <>
+      {!profile && (
+        <ParentOnboardingModal accent={accent} onDone={onProfileCreated} />
+      )}
+
       <div className={styles.grid3}>
         <div className={styles.card}>
           <p className={styles.cardSub}>待开始的咨询</p>
@@ -258,112 +302,11 @@ function ParentOverview({
           <p className={styles.statValue}>{done.length}</p>
         </div>
         <div className={styles.card}>
-          <p className={styles.cardSub}>可咨询的学长学姐</p>
-          <p className={styles.statValue}>{filteredMentors.length}</p>
+          <p className={styles.cardSub}>快速入口</p>
+          <Link href="/dashboard/match" className={`${styles.btn} ${styles.btnPrimary}`} style={{ background: accent, marginTop: 8 }}>
+            找学长学姐
+          </Link>
         </div>
-      </div>
-
-      <div className={styles.filterSection}>
-        {uniqueSchools.length > 0 && (
-          <div className={styles.filterGroup}>
-            <div className={styles.filterGroupLabel}>学校</div>
-            <div className={styles.filterPills}>
-              {uniqueSchools.map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  className={`${styles.filterPill} ${selectedSchool === s ? styles.filterPillActive : ""}`}
-                  onClick={() => handleSchool(s)}
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {uniqueColleges.length > 0 && (
-          <div className={styles.filterGroup}>
-            <div className={styles.filterGroupLabel}>院系</div>
-            <div className={styles.filterPills}>
-              {uniqueColleges.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  className={`${styles.filterPill} ${selectedCollege === c ? styles.filterPillActive : ""}`}
-                  onClick={() => handleCollege(c)}
-                >
-                  {c}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {uniqueCategories.length > 0 && (
-          <div className={styles.filterGroup}>
-            <div className={styles.filterGroupLabel}>方向</div>
-            <div className={styles.filterPills}>
-              {uniqueCategories.map((cat) => (
-                <button
-                  key={cat}
-                  type="button"
-                  className={`${styles.filterPill} ${selectedCategory === cat ? styles.filterPillActive : ""}`}
-                  onClick={() => handleCategory(cat)}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div className={styles.section}>
-        <div className={styles.sectionHead}>
-          <h2 className={styles.sectionTitle}>学长学姐</h2>
-        </div>
-        {filteredMentors.length === 0 ? (
-          <div className={styles.emptyState}>
-            {mentors.length === 0
-              ? "暂时还没有可咨询的学长学姐。"
-              : "没有符合条件的学长学姐，试试调整筛选条件。"}
-          </div>
-        ) : (
-          <div className={styles.grid2}>
-            {filteredMentors.map((m) => (
-              <Link
-                key={m.id}
-                href={`/dashboard/mentors/${m.id}`}
-                className={styles.card}
-                style={{ textDecoration: "none" }}
-              >
-                <div className={styles.cardBanner} style={{ background: accent }} />
-                <h3 className={styles.cardTitle}>
-                  {m.name || "匿名学长学姐"} · {m.school || "—"}
-                </h3>
-                <p className={styles.cardSub}>
-                  {m.major || "—"} · {m.year || "—"} · 评分 {Number(m.ratingAvg).toFixed(1)}
-                </p>
-                {m.bio && (
-                  <p style={{ fontSize: 13, color: "#4a4a45", marginTop: 10, lineHeight: 1.6 }}>
-                    {m.bio.slice(0, 80)}
-                    {m.bio.length > 80 ? "…" : ""}
-                  </p>
-                )}
-                {m.tags && m.tags.length > 0 && (
-                  <div style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 6 }}>
-                    {m.tags.slice(0, 4).map((t) => (
-                      <span key={t} className={`${styles.pill} ${styles.pillNeutral}`}>
-                        {t}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </Link>
-            ))}
-          </div>
-        )}
       </div>
 
       {upcoming.length > 0 && (
@@ -376,6 +319,32 @@ function ParentOverview({
           </div>
           <div className={styles.grid2}>
             {upcoming.slice(0, 4).map((o) => (
+              <Link
+                key={o.id}
+                href={`/dashboard/orders/${o.id}`}
+                className={styles.card}
+                style={{ textDecoration: "none" }}
+              >
+                <h3 className={styles.cardTitle}>{o.topic?.slice(0, 40) || "咨询订单"}</h3>
+                <p className={styles.cardSub}>
+                  下单于 {formatDateTime(o.createdAt)} · <OrderStatusPill status={o.status} />
+                </p>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {done.length > 0 && (
+        <div className={styles.section}>
+          <div className={styles.sectionHead}>
+            <h2 className={styles.sectionTitle}>已完成的咨询</h2>
+            <Link href="/dashboard/orders" className={`${styles.btn} ${styles.btnGhost}`}>
+              全部咨询
+            </Link>
+          </div>
+          <div className={styles.grid2}>
+            {done.slice(0, 4).map((o) => (
               <Link
                 key={o.id}
                 href={`/dashboard/orders/${o.id}`}

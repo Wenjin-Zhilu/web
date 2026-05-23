@@ -13,6 +13,7 @@ export type NavItem = {
 
 const parentNav: NavItem[] = [
   { href: "/dashboard", label: "概览", matches: (p) => p === "/dashboard" },
+  { href: "/dashboard/match", label: "匹配", matches: (p) => p.startsWith("/dashboard/match") },
   { href: "/dashboard/orders", label: "我的咨询", matches: (p) => p.startsWith("/dashboard/orders") },
   { href: "/dashboard/profile", label: "我的资料", matches: (p) => p.startsWith("/dashboard/profile") },
 ];
