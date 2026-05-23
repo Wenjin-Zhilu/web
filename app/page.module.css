@@ -415,6 +415,39 @@
   margin-right: 2px;
 }
 
+/* AI features */
+.aiGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+.aiCard {
+  border: 1px solid #ececec;
+  border-radius: 10px;
+  padding: 28px 22px;
+  background: #ffffff;
+  text-align: center;
+}
+.aiIcon {
+  font-size: 32px;
+  margin-bottom: 14px;
+  line-height: 1;
+}
+.aiTitle {
+  font-family: var(--serif);
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f1f1f;
+  margin: 0 0 8px;
+  letter-spacing: 0.005em;
+}
+.aiDesc {
+  font-size: 13px;
+  line-height: 1.7;
+  color: #6e6e68;
+  margin: 0;
+}
+
 /* FAQ */
 .faqList {
   display: flex;
@@ -620,7 +653,8 @@
   .whyGrid {
     grid-template-columns: 1fr;
   }
-  .reasonGrid {
+  .reasonGrid,
+  .aiGrid {
     grid-template-columns: 1fr;
   }
   .whyClose {

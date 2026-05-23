@@ -53,6 +53,24 @@ const STEPS = [
   },
 ];
 
+const AI_FEATURES = [
+  {
+    icon: "📝",
+    title: "每次咨询，自动留档",
+    desc: "通话结束后 AI 自动生成摘要，关键信息不遗漏，随时回顾。",
+  },
+  {
+    icon: "🧩",
+    title: "多次积累，读懂孩子",
+    desc: "AI 整合历次咨询，逐步形成兴趣、能力、适合方向的学生画像。",
+  },
+  {
+    icon: "🎯",
+    title: "下次咨询，直奔重点",
+    desc: "学长提前看到画像，不用重复介绍，每一次都更有针对性。",
+  },
+];
+
 const GUARANTEES = [
   {
     icon: "真",
@@ -221,6 +239,29 @@ export default function Home() {
                 ，把关键问题问清楚。具体价格会根据咨询时长、匹配对象和问题复杂度有所不同；
                 您可在查看匹配对象后，再决定是否预约。
               </p>
+            </div>
+          </div>
+        </section>
+
+        {/* AI features */}
+        <section className={styles.section}>
+          <div className={styles.sectionInner}>
+            <div className={styles.sectionHeadCenter}>
+              <div className={styles.sectionEyebrow}>Beyond one session</div>
+              <h2 className={styles.sectionTitle}>不只是一次咨询</h2>
+              <p className={styles.sectionSub}>
+                每一次对话都在帮你看得更清。平台用 AI
+                记录和整合每次咨询的关键信息，让孩子的升学画像越来越完整。
+              </p>
+            </div>
+            <div className={styles.aiGrid}>
+              {AI_FEATURES.map((f) => (
+                <div key={f.title} className={styles.aiCard}>
+                  <div className={styles.aiIcon}>{f.icon}</div>
+                  <h3 className={styles.aiTitle}>{f.title}</h3>
+                  <p className={styles.aiDesc}>{f.desc}</p>
+                </div>
+              ))}
             </div>
           </div>
         </section>

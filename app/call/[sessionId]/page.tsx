@@ -4,6 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { authClient } from "@/lib/auth-client";
 import * as zego from "@/lib/zego";
+import * as callRecorder from "@/lib/call-recorder";
 import styles from "./call.module.css";
 
 type CallState = "loading" | "waiting" | "active" | "countdown" | "ended";
@@ -28,6 +29,7 @@ export default function CallPage() {
   const [elapsed, setElapsed] = useState(0);
   const [durationMins, setDurationMins] = useState(30);
   const [peerName, setPeerName] = useState("");
+  const [recording, setRecording] = useState(false);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const statusPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -59,6 +61,9 @@ export default function CallPage() {
       statusPollRef.current = null;
     }
 
+    const recordingBlob = await callRecorder.stopRecording();
+    setRecording(false);
+
     try {
       await zego.leaveRoom(roomIdRef.current);
     } catch (error) {
@@ -80,7 +85,17 @@ export default function CallPage() {
       }
     }
 
-    // 挂断后(自挂或对方挂)统一回到订单详情;30 分钟窗口内还能点「继续通话」重连
+    if (recordingBlob && recordingBlob.size > 0) {
+      const form = new FormData();
+      form.append("audio", recordingBlob, `call_${sessionId}.webm`);
+      form.append("sessionId", sessionId);
+      fetch("/api/call/upload-recording", {
+        method: "POST",
+        credentials: "include",
+        body: form,
+      }).catch((err) => console.error("upload recording failed", err));
+    }
+
     if (orderIdRef.current) {
       router.replace(`/dashboard/orders/${orderIdRef.current}`);
     } else {
@@ -124,6 +139,13 @@ export default function CallPage() {
         if (!callStartedRef.current) {
           callStartedRef.current = true;
           setCallState("active");
+
+          const localS = zego.getLocalStream();
+          const remoteS = zego.getRemoteStream();
+          if (localS && remoteS) {
+            callRecorder.startRecording(localS, remoteS);
+            setRecording(true);
+          }
 
           const startTime = Date.now();
           timerRef.current = setInterval(() => {
@@ -301,6 +323,13 @@ export default function CallPage() {
         <span className={styles.statusDot} />
         <span className={styles.statusText}>通话中</span>
       </div>
+
+      {recording && (
+        <div className={styles.recordingBadge}>
+          <span className={styles.recordingDot} />
+          平台录音中
+        </div>
+      )}
 
       <div className={styles.controls}>
         <button

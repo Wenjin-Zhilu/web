@@ -11,6 +11,7 @@ let publishStreamID: string | null = null;
 let currentRoomID: string | null = null;
 let peerUserID: string | null = null;
 const playingStreams = new Set<string>();
+let remoteStream: MediaStream | null = null;
 
 async function getZegoEngine(): Promise<ZegoEngineConstructor> {
   const { ZegoExpressEngine } = await import("zego-express-engine-webrtc");
@@ -105,21 +106,22 @@ export function onRoomStreamUpdate(
     const [, updateType, streamList] = args;
     const remoteStreams = streamList.filter(isPeerStream);
     if (updateType === "ADD") {
-      if (remoteStreams.length > 0) {
-        callback(updateType, remoteStreams);
-      }
       for (const stream of remoteStreams) {
         const streamID = stream.streamID;
         if (playingStreams.has(streamID)) continue;
         playingStreams.add(streamID);
         try {
-          const remoteStream = await engine!.startPlayingStream(streamID);
+          const rs = await engine!.startPlayingStream(streamID);
+          remoteStream = rs;
           const audio = new Audio();
-          audio.srcObject = remoteStream;
+          audio.srcObject = rs;
           audio.autoplay = true;
         } catch {
           playingStreams.delete(streamID);
         }
+      }
+      if (remoteStreams.length > 0) {
+        callback(updateType, remoteStreams);
       }
     }
     if (updateType === "DELETE") {
@@ -140,6 +142,14 @@ export function onRoomStreamUpdate(
   });
 }
 
+export function getLocalStream(): MediaStream | null {
+  return localStream;
+}
+
+export function getRemoteStream(): MediaStream | null {
+  return remoteStream;
+}
+
 export function destroy(): void {
   if (engine) {
     engine.off("roomUserUpdate");
@@ -147,6 +157,7 @@ export function destroy(): void {
     engine = null;
   }
   localStream = null;
+  remoteStream = null;
   publishStreamID = null;
   currentRoomID = null;
   peerUserID = null;
