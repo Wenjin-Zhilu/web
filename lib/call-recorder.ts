@@ -6,13 +6,16 @@ export function startRecording(local: MediaStream, remote: MediaStream): void {
   if (recorder) return;
 
   audioCtx = new AudioContext();
-  const dest = audioCtx.createMediaStreamDestination();
 
   const localSource = audioCtx.createMediaStreamSource(local);
-  localSource.connect(dest);
-
   const remoteSource = audioCtx.createMediaStreamSource(remote);
-  remoteSource.connect(dest);
+
+  const merger = audioCtx.createChannelMerger(2);
+  localSource.connect(merger, 0, 0);
+  remoteSource.connect(merger, 0, 1);
+
+  const dest = audioCtx.createMediaStreamDestination();
+  merger.connect(dest);
 
   chunks = [];
   recorder = new MediaRecorder(dest.stream, { mimeType: "audio/webm;codecs=opus" });
