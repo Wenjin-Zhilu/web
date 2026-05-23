@@ -140,13 +140,6 @@ export default function CallPage() {
           callStartedRef.current = true;
           setCallState("active");
 
-          const localS = zego.getLocalStream();
-          const remoteS = zego.getRemoteStream();
-          if (localS && remoteS) {
-            callRecorder.startRecording(localS, remoteS);
-            setRecording(true);
-          }
-
           const startTime = Date.now();
           timerRef.current = setInterval(() => {
             const secs = Math.floor((Date.now() - startTime) / 1000);
@@ -161,6 +154,15 @@ export default function CallPage() {
               void endCall();
             }
           }, 1000);
+        }
+
+        if (!callRecorder.isRecording()) {
+          const localS = zego.getLocalStream();
+          const remoteS = zego.getRemoteStream();
+          if (localS && remoteS) {
+            callRecorder.startRecording(localS, remoteS);
+            setRecording(true);
+          }
         }
 
         if (startReportSentRef.current || startReportInFlightRef.current) return;
