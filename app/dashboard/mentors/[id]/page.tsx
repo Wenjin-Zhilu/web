@@ -154,8 +154,8 @@ export default function MentorDetailPage() {
     return (
       <div style={{ padding: 32 }}>
         <div className={styles.alertBad}>{err}</div>
-        <Link href="/dashboard" className={`${styles.btn} ${styles.btnGhost}`} style={{ marginTop: 12 }}>
-          返回
+        <Link href="/dashboard/match" className={`${styles.btn} ${styles.btnGhost}`} style={{ marginTop: 12 }}>
+          ← 返回匹配
         </Link>
       </div>
     );
@@ -170,17 +170,16 @@ export default function MentorDetailPage() {
   return (
     <>
       <div className={styles.topbar}>
-        <Link href="/dashboard" style={{ color: "inherit", textDecoration: "none" }}>
-          问津
-        </Link>
-        <span className={styles.crumbSep}>›</span>
-        <Link href="/dashboard" style={{ color: "inherit", textDecoration: "none" }}>
-          概览
+        <Link href="/dashboard/match" style={{ color: "inherit", textDecoration: "none" }}>
+          匹配
         </Link>
         <span className={styles.crumbSep}>›</span>
         <span className={styles.crumbCurrent}>{mentor.name}</span>
       </div>
       <div className={styles.content}>
+        <Link href="/dashboard/match" className={`${styles.btn} ${styles.btnGhost}`} style={{ marginBottom: 16 }}>
+          ← 返回匹配
+        </Link>
         {/* 头部信息卡 */}
         <div className={styles.card} style={{ position: "relative" }}>
           <div className={styles.cardBanner} style={{ background: ACCENT }} />
