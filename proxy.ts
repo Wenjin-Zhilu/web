@@ -88,12 +88,14 @@ export async function proxy(request: NextRequest) {
 
   if (isProtected || isAuthPage) {
     let isLoggedIn = false;
-    const isMentorContext = host === "mentor.wenjin-zhilu.com";
-    const sessionEndpoints = isMentorContext
-      ? ["/api/mauth/get-session"]
-      : ["/api/auth/get-session"];
-    if (isProtected) {
-      sessionEndpoints.push(isMentorContext ? "/api/auth/get-session" : "/api/mauth/get-session");
+    const roleParam = request.nextUrl.searchParams.get("role");
+    const isMentorContext = host === "mentor.wenjin-zhilu.com" || roleParam === "mentor";
+
+    let sessionEndpoints: string[];
+    if (isAuthPage) {
+      sessionEndpoints = [isMentorContext ? "/api/mauth/get-session" : "/api/auth/get-session"];
+    } else {
+      sessionEndpoints = ["/api/auth/get-session", "/api/mauth/get-session"];
     }
 
     for (const endpoint of sessionEndpoints) {
