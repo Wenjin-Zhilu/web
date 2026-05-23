@@ -76,7 +76,7 @@ export default function QuestionsPage() {
           <Link href="/#how">如何参与</Link>
           <Link href="/questions">家长都在问</Link>
           <Link href="/auth?mode=login">登录</Link>
-          <Link href="/questionnaire" className={pageStyles.navBtn}>
+          <Link href="/auth" className={pageStyles.navBtn}>
             看看能问谁
           </Link>
         </nav>
@@ -94,7 +94,7 @@ export default function QuestionsPage() {
               不需要把问题想得完整，先看看哪一类最贴近您此刻的处境。
             </p>
             <div className={styles.headCta}>
-              <Link href="/questionnaire" className={pageStyles.btnPrimary}>
+              <Link href="/auth" className={pageStyles.btnPrimary}>
                 我也想问类似问题 <span>→</span>
               </Link>
             </div>
@@ -131,9 +131,9 @@ export default function QuestionsPage() {
               告诉我们孩子的阶段和<span className={pageStyles.heroAccent}>纠结点</span>。
             </h2>
             <p className={pageStyles.finalCtaSub}>
-              看看适合问哪位过来人。两分钟问卷，看到匹配再决定要不要付费。
+              注册后按学校和专业浏览学长学姐，看到合适的再付费。
             </p>
-            <Link href="/questionnaire" className={pageStyles.btnPrimary}>
+            <Link href="/auth" className={pageStyles.btnPrimary}>
               看看能问谁 <span>→</span>
             </Link>
           </div>

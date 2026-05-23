@@ -54,15 +54,6 @@ export const apiSend = <T = unknown>(
     body: body === undefined ? undefined : JSON.stringify(body),
   });
 
-// 登录成功后调用：把 wj_anon_pp cookie 对应的匿名问卷挂到当前用户身上。
-// 没有匿名问卷 / 用户已有 profile 时后端会安静返回，失败也不影响登录流程。
-export async function claimAnonymousProfile(): Promise<void> {
-  try {
-    await api("/api/parent-profile/claim", { method: "POST" });
-  } catch {
-    // 忽略：claim 失败不应该阻塞登录跳转
-  }
-}
 
 export function formatCents(cents: number | null | undefined): string {
   if (cents == null) return "—";

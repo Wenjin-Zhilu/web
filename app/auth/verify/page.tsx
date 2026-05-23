@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
-import { api, claimAnonymousProfile } from "@/lib/api";
+import { api } from "@/lib/api";
 import styles from "./verify.module.css";
 
 function maskEmail(email: string): string {
@@ -75,7 +75,6 @@ export default function VerifyPage() {
         sessionStorage.removeItem("auth_redirect");
         sessionStorage.removeItem("auth_role");
         sessionStorage.removeItem("auth_ref");
-        await claimAnonymousProfile();
         if (refCode) {
           try {
             await api("/api/mentors/me/claim-invite", {

@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
-import { claimAnonymousProfile } from "@/lib/api";
 import { Suspense } from "react";
 import styles from "./auth.module.css";
 
@@ -15,7 +14,7 @@ const HK_UNI_DOMAINS = [
 
 function isEduEmail(email: string): boolean {
   const lower = email.toLowerCase();
-  if (lower.endsWith(".edu.cn")) return true;
+  if (lower.endsWith(".edu.cn") || lower.endsWith(".edu")) return true;
   const domain = lower.split("@")[1];
   if (!domain) return false;
   return HK_UNI_DOMAINS.some((d) => domain === d || domain.endsWith("." + d));
@@ -124,7 +123,6 @@ function AuthForm() {
             setError(signInError.message || "登录失败,请检查邮箱和密码");
           }
         } else {
-          await claimAnonymousProfile();
           router.replace(redirect);
         }
       }

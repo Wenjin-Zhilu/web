@@ -128,14 +128,14 @@ export default function Home() {
               帮您把专业学习、院校氛围、适配风险和未来路径讲清楚。
             </p>
             <div className={styles.heroCta}>
-              <Link href="/questionnaire" className={styles.btnPrimary}>
+              <Link href="/auth" className={styles.btnPrimary}>
                 看看能问谁 <span>→</span>
               </Link>
               <Link href="/questions" className={styles.btnGhost}>
                 看看家长都在问什么
               </Link>
             </div>
-            <div className={styles.heroMeta}>2 分钟问卷 · 不需要注册 · 看到匹配再决定要不要付费</div>
+            <div className={styles.heroMeta}>注册即可浏览 · 按学校和专业筛选 · 看到合适的再付费</div>
           </div>
         </section>
 
@@ -178,7 +178,7 @@ export default function Home() {
               <h2 className={styles.sectionTitle}>覆盖学校广泛</h2>
               <p className={styles.sectionSub}>
                 覆盖热门院校与专业方向。每所院校配多位对口专业的在读学长学姐，覆盖从本科到博士。
-                若您的目标院校 / 专业暂未列出，可在问卷中提交需求继续匹配。
+                若您的目标院校 / 专业暂未列出，注册后可联系我们提交需求。
               </p>
             </div>
             <div className={styles.schoolWrap}>
@@ -283,10 +283,10 @@ export default function Home() {
               你正在纠结的路，<span className={styles.heroAccent}>有人曾走过</span>。
             </h2>
             <p className={styles.finalCtaSub}>
-              两分钟意向问卷，看到匹配的人再决定要不要付费。
+              注册后按学校和专业浏览学长学姐，看到合适的再付费。
             </p>
             <div className={styles.heroCta}>
-              <Link href="/questionnaire" className={styles.btnPrimary}>
+              <Link href="/auth" className={styles.btnPrimary}>
                 看看能问谁 <span>→</span>
               </Link>
               <Link href="/questions" className={styles.btnGhost}>
@@ -315,7 +315,7 @@ export default function Home() {
               <a href="#how">如何参与</a>
               <a href="#guarantees">问津能保证什么</a>
               <Link href="/questions">家长都在问什么</Link>
-              <Link href="/questionnaire">看看能问谁</Link>
+              <Link href="/auth">看看能问谁</Link>
               <Link href="/auth?mode=login">登录</Link>
             </div>
           </div>

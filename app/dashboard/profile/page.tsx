@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { apiGet, apiSend, ApiError } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 import { mergeIntroCard, type IntroCard } from "@/lib/intro-card-schema";
@@ -370,79 +369,19 @@ function ParentProfileView({ profile }: { profile: ParentProfile | null }) {
       </div>
       <div className={styles.content}>
         <h1 className={styles.pageTitle}>我的资料</h1>
-        <p className={styles.pageSub}>你在问卷里填写的信息,会展示给学长学姐看。</p>
+        <p className={styles.pageSub}>你的基本信息。</p>
 
-        {!profile ? (
-          <div className={styles.card} style={{ marginTop: 16 }}>
-            <div className={styles.cardBanner} style={{ background: accent }} />
-            <h3 className={styles.cardTitle}>还没有填写问卷</h3>
-            <p className={styles.cardSub} style={{ marginBottom: 14 }}>
-              填一份问卷,可以更清楚地告诉学长学姐你想聊什么。
-            </p>
-            <Link
-              href="/questionnaire"
-              className={`${styles.btn} ${styles.btnPrimary}`}
-              style={{ background: accent }}
-            >
-              开始填写
-            </Link>
+        {profile ? (
+          <div className={styles.grid2}>
+            <InfoCard label="身份" value={profile.parentRole ? PARENT_ROLE_LABEL[profile.parentRole] || profile.parentRole : "—"} />
+            <InfoCard label="所在省份" value={profile.province || "—"} />
+            <InfoCard label="阶段" value={profile.stage ? STAGE_LABEL[profile.stage] || profile.stage : "—"} />
+            <InfoCard label="升学倾向" value={profile.tilt ? TILT_LABEL[profile.tilt] || profile.tilt : "—"} />
           </div>
         ) : (
-          <>
-            <div className={styles.grid2}>
-              <InfoCard label="身份" value={profile.parentRole ? PARENT_ROLE_LABEL[profile.parentRole] || profile.parentRole : "—"} />
-              <InfoCard label="所在省份" value={profile.province || "—"} />
-              <InfoCard label="阶段" value={profile.stage ? STAGE_LABEL[profile.stage] || profile.stage : "—"} />
-              <InfoCard label="升学倾向" value={profile.tilt ? TILT_LABEL[profile.tilt] || profile.tilt : "—"} />
-            </div>
-
-            <div className={styles.section}>
-              <h2 className={styles.sectionTitle}>意向专业</h2>
-              <div style={{ marginTop: 8, display: "flex", flexWrap: "wrap", gap: 8 }}>
-                {(profile.intendedMajors || []).map((m) => (
-                  <span key={m} className={`${styles.pill} ${styles.pillNeutral}`}>
-                    {m}
-                  </span>
-                ))}
-                {(!profile.intendedMajors || profile.intendedMajors.length === 0) && (
-                  <span style={{ color: "#9a9a93", fontSize: 13 }}>—</span>
-                )}
-              </div>
-            </div>
-
-            <div className={styles.section}>
-              <h2 className={styles.sectionTitle}>关注方向</h2>
-              <div style={{ marginTop: 8, display: "flex", flexWrap: "wrap", gap: 8 }}>
-                {(profile.focusAreas || []).map((m) => (
-                  <span key={m} className={`${styles.pill} ${styles.pillNeutral}`}>
-                    {m}
-                  </span>
-                ))}
-                {(!profile.focusAreas || profile.focusAreas.length === 0) && (
-                  <span style={{ color: "#9a9a93", fontSize: 13 }}>—</span>
-                )}
-              </div>
-            </div>
-
-            {profile.note && (
-              <div className={styles.section}>
-                <h2 className={styles.sectionTitle}>额外说明</h2>
-                <div className={styles.card} style={{ marginTop: 8, whiteSpace: "pre-wrap", fontSize: 14, lineHeight: 1.7 }}>
-                  {profile.note}
-                </div>
-              </div>
-            )}
-
-            <div className={styles.section} style={{ display: "flex", gap: 10 }}>
-              <Link
-                href="/questionnaire"
-                className={`${styles.btn} ${styles.btnPrimary}`}
-                style={{ background: accent }}
-              >
-                重新填写问卷
-              </Link>
-            </div>
-          </>
+          <div className={styles.emptyState} style={{ marginTop: 16 }}>
+            暂无资料。你可以直接在概览页浏览和筛选学长学姐。
+          </div>
         )}
       </div>
     </>

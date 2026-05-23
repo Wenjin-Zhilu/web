@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
 import { apiGet, formatCents, formatDateTime, ApiError } from "@/lib/api";
@@ -76,6 +76,7 @@ type MentorListItem = {
   tags: string[] | null;
   ratingAvg: string;
   reviewsCount: number;
+  majorCategory: string | null;
 };
 
 type Earnings = {
@@ -167,7 +168,6 @@ export default function DashboardPage() {
 
         {role === "parent" ? (
           <ParentOverview
-            profile={me.parentProfile ?? null}
             orders={orders}
             mentors={mentors}
             accent={accent}
@@ -189,12 +189,10 @@ export default function DashboardPage() {
 // ── Parent ─────────────────────────────────────────────────────────────
 
 function ParentOverview({
-  profile,
   orders,
   mentors,
   accent,
 }: {
-  profile: ParentProfile | null;
   orders: Order[];
   mentors: MentorListItem[];
   accent: string;
@@ -202,20 +200,49 @@ function ParentOverview({
   const upcoming = orders.filter((o) => o.status === "scheduled" || o.status === "in_call");
   const done = orders.filter((o) => o.status === "completed" || o.status === "reviewed");
 
-  if (!profile) {
-    return (
-      <div className={styles.card} style={{ marginTop: 16 }}>
-        <div className={styles.cardBanner} style={{ background: accent }} />
-        <h3 className={styles.cardTitle}>先填一份咨询问卷</h3>
-        <p className={styles.cardSub} style={{ marginBottom: 14 }}>
-          填完问卷,可以更好地告诉学长学姐你想聊什么。整个过程约 3 分钟。
-        </p>
-        <Link href="/questionnaire" className={`${styles.btn} ${styles.btnPrimary}`} style={{ background: accent }}>
-          开始填写问卷
-        </Link>
-      </div>
-    );
-  }
+  const [selectedSchool, setSelectedSchool] = useState("");
+  const [selectedCollege, setSelectedCollege] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
+
+  const uniqueSchools = useMemo(
+    () => [...new Set(mentors.map((m) => m.school).filter(Boolean))] as string[],
+    [mentors],
+  );
+
+  const afterSchool = selectedSchool
+    ? mentors.filter((m) => m.school === selectedSchool)
+    : mentors;
+
+  const uniqueColleges = useMemo(
+    () => [...new Set(afterSchool.map((m) => m.college).filter(Boolean))] as string[],
+    [afterSchool],
+  );
+
+  const afterCollege = selectedCollege
+    ? afterSchool.filter((m) => m.college === selectedCollege)
+    : afterSchool;
+
+  const uniqueCategories = useMemo(
+    () => [...new Set(afterCollege.map((m) => m.majorCategory).filter(Boolean))] as string[],
+    [afterCollege],
+  );
+
+  const filteredMentors = selectedCategory
+    ? afterCollege.filter((m) => m.majorCategory === selectedCategory)
+    : afterCollege;
+
+  const handleSchool = (v: string) => {
+    setSelectedSchool(v === selectedSchool ? "" : v);
+    setSelectedCollege("");
+    setSelectedCategory("");
+  };
+  const handleCollege = (v: string) => {
+    setSelectedCollege(v === selectedCollege ? "" : v);
+    setSelectedCategory("");
+  };
+  const handleCategory = (v: string) => {
+    setSelectedCategory(v === selectedCategory ? "" : v);
+  };
 
   return (
     <>
@@ -232,21 +259,79 @@ function ParentOverview({
         </div>
         <div className={styles.card}>
           <p className={styles.cardSub}>可咨询的学长学姐</p>
-          <p className={styles.statValue}>{mentors.length}</p>
+          <p className={styles.statValue}>{filteredMentors.length}</p>
         </div>
+      </div>
+
+      <div className={styles.filterSection}>
+        {uniqueSchools.length > 0 && (
+          <div className={styles.filterGroup}>
+            <div className={styles.filterGroupLabel}>学校</div>
+            <div className={styles.filterPills}>
+              {uniqueSchools.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  className={`${styles.filterPill} ${selectedSchool === s ? styles.filterPillActive : ""}`}
+                  onClick={() => handleSchool(s)}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {uniqueColleges.length > 0 && (
+          <div className={styles.filterGroup}>
+            <div className={styles.filterGroupLabel}>院系</div>
+            <div className={styles.filterPills}>
+              {uniqueColleges.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  className={`${styles.filterPill} ${selectedCollege === c ? styles.filterPillActive : ""}`}
+                  onClick={() => handleCollege(c)}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {uniqueCategories.length > 0 && (
+          <div className={styles.filterGroup}>
+            <div className={styles.filterGroupLabel}>方向</div>
+            <div className={styles.filterPills}>
+              {uniqueCategories.map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  className={`${styles.filterPill} ${selectedCategory === cat ? styles.filterPillActive : ""}`}
+                  onClick={() => handleCategory(cat)}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className={styles.section}>
         <div className={styles.sectionHead}>
           <h2 className={styles.sectionTitle}>学长学姐</h2>
         </div>
-        {mentors.length === 0 ? (
+        {filteredMentors.length === 0 ? (
           <div className={styles.emptyState}>
-            暂时还没有可咨询的学长学姐。
+            {mentors.length === 0
+              ? "暂时还没有可咨询的学长学姐。"
+              : "没有符合条件的学长学姐，试试调整筛选条件。"}
           </div>
         ) : (
           <div className={styles.grid2}>
-            {mentors.map((m) => (
+            {filteredMentors.map((m) => (
               <Link
                 key={m.id}
                 href={`/dashboard/mentors/${m.id}`}
