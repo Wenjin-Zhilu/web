@@ -276,7 +276,11 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           </div>
         )}
 
-        {isParent && order.paymentStatus !== "paid" && order.paymentStatus !== "refunded" && (
+        {isParent &&
+          order.status !== "cancelled_by_parent" &&
+          order.status !== "cancelled_by_mentor" &&
+          order.paymentStatus !== "paid" &&
+          order.paymentStatus !== "refunded" && (
           <div
             className={styles.card}
             style={{

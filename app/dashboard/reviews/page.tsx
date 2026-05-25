@@ -1,29 +1,49 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import dashStyles from "../dashboard.module.css";
 import styles from "./page.module.css";
-import { SCHOOLS } from "./mock-data";
+import { apiGet } from "@/lib/api";
+import type { SchoolData } from "./mock-data";
 
 export default function ReviewsPage() {
   const [query, setQuery] = useState("");
-  const filtered = SCHOOLS.filter(
+  const [schools, setSchools] = useState<SchoolData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    apiGet<{ schools: SchoolData[] }>("/api/reviews")
+      .then((res) => setSchools(res.schools))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const filtered = schools.filter(
     (s) =>
       s.name.includes(query) ||
       s.colleges.some((c) => c.name.includes(query))
   );
 
-  const totalMentors = SCHOOLS.reduce(
+  const totalMentors = schools.reduce(
     (a, s) => a + s.colleges.reduce((b, c) => b + c.mentorCount, 0),
     0
   );
-  const totalColleges = SCHOOLS.reduce((a, s) => a + s.colleges.length, 0);
+  const totalColleges = schools.reduce((a, s) => a + s.colleges.length, 0);
+
+  if (loading) {
+    return (
+      <div className={dashStyles.content}>
+        <h1 className={dashStyles.pageTitle}>院校评价</h1>
+        <p className={dashStyles.pageSub}>加载中…</p>
+      </div>
+    );
+  }
 
   return (
     <div className={dashStyles.content}>
       <h1 className={dashStyles.pageTitle}>院校评价</h1>
       <p className={dashStyles.pageSub}>
-        来自真实在读学长学姐的一手评价 · {SCHOOLS.length} 所院校 · {totalColleges} 个学院 · {totalMentors} 位参与
+        来自真实在读学长学姐的一手评价 · {schools.length} 所院校 · {totalColleges} 个学院 · {totalMentors} 位参与
       </p>
 
       <input
@@ -38,8 +58,8 @@ export default function ReviewsPage() {
       <div className={styles.list}>
         {filtered.map((school) => (
           <Link
-            key={school.slug}
-            href={`/dashboard/reviews/${school.slug}`}
+            key={school.name}
+            href={`/dashboard/reviews/${encodeURIComponent(school.name)}`}
             className={styles.card}
           >
             <div className={styles.cardTop}>
@@ -53,7 +73,7 @@ export default function ReviewsPage() {
             </div>
             <div className={styles.cardColleges}>
               {school.colleges.map((c) => (
-                <span key={c.slug} className={styles.collegeChip}>
+                <span key={c.name} className={styles.collegeChip}>
                   {c.name}
                   <span className={styles.collegeCount}>{c.mentorCount}</span>
                 </span>
@@ -63,7 +83,9 @@ export default function ReviewsPage() {
         ))}
         {filtered.length === 0 && (
           <div className={dashStyles.emptyState}>
-            暂无匹配的院校，试试其他关键词？
+            {schools.length === 0
+              ? "暂无评价数据，学长学姐正在入驻中…"
+              : "暂无匹配的院校，试试其他关键词？"}
           </div>
         )}
       </div>

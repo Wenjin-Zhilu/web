@@ -1,19 +1,52 @@
 "use client";
-import { use } from "react";
+import { use, useState, useEffect } from "react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import dashStyles from "../../dashboard.module.css";
 import styles from "./page.module.css";
-import { SCHOOLS } from "../mock-data";
+import { apiGet } from "@/lib/api";
+import type { SchoolData } from "../mock-data";
 
 export default function SchoolPage({
   params,
 }: {
   params: Promise<{ school: string }>;
 }) {
-  const { school: slug } = use(params);
-  const school = SCHOOLS.find((s) => s.slug === slug);
-  if (!school) notFound();
+  const { school: schoolName } = use(params);
+  const decoded = decodeURIComponent(schoolName);
+  const [school, setSchool] = useState<SchoolData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    apiGet<{ schools: SchoolData[] }>("/api/reviews")
+      .then((res) => {
+        const found = res.schools.find((s) => s.name === decoded);
+        setSchool(found || null);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [decoded]);
+
+  if (loading) {
+    return (
+      <div className={dashStyles.content}>
+        <div className={styles.crumb}>
+          <Link href="/dashboard/reviews">← 院校列表</Link>
+        </div>
+        <p className={dashStyles.pageSub}>加载中…</p>
+      </div>
+    );
+  }
+
+  if (!school) {
+    return (
+      <div className={dashStyles.content}>
+        <div className={styles.crumb}>
+          <Link href="/dashboard/reviews">← 院校列表</Link>
+        </div>
+        <div className={dashStyles.emptyState}>未找到该院校的评价数据</div>
+      </div>
+    );
+  }
 
   const totalMentors = school.colleges.reduce((a, c) => a + c.mentorCount, 0);
 
@@ -35,8 +68,8 @@ export default function SchoolPage({
       <div className={styles.list}>
         {school.colleges.map((college) => (
           <Link
-            key={college.slug}
-            href={`/dashboard/reviews/${school.slug}/${college.slug}`}
+            key={college.name}
+            href={`/dashboard/reviews/${encodeURIComponent(school.name)}/${encodeURIComponent(college.name)}`}
             className={styles.collegeCard}
           >
             <div className={styles.collegeCardLeft}>
@@ -44,7 +77,9 @@ export default function SchoolPage({
               <div className={styles.collegeCardMajors}>
                 {college.majors.join(" · ")}
               </div>
-              <p className={styles.collegeCardSummary}>{college.aiSummary}</p>
+              {college.aiSummary && (
+                <p className={styles.collegeCardSummary}>{college.aiSummary}</p>
+              )}
             </div>
             <div className={styles.collegeCardRight}>
               <div className={styles.collegeCardStat}>

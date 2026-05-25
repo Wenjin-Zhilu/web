@@ -1,11 +1,11 @@
 "use client";
-import { use } from "react";
+import { use, useState, useEffect } from "react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import dashStyles from "../../../dashboard.module.css";
 import styles from "./page.module.css";
-import { SCHOOLS, DIM_HINTS } from "../../mock-data";
-import type { Review } from "../../mock-data";
+import { apiGet } from "@/lib/api";
+import { DIM_HINTS } from "../../mock-data";
+import type { Review, CollegeData } from "../../mock-data";
 
 const DIM_ICONS: Record<string, string> = {
   career: "职",
@@ -34,16 +34,57 @@ function ReviewCard({ r }: { r: Review }) {
   );
 }
 
+interface DetailResp {
+  school: { name: string; tags: string[] };
+  college: CollegeData;
+}
+
 export default function CollegePage({
   params,
 }: {
   params: Promise<{ school: string; college: string }>;
 }) {
-  const { school: schoolSlug, college: collegeSlug } = use(params);
-  const school = SCHOOLS.find((s) => s.slug === schoolSlug);
-  if (!school) notFound();
-  const college = school.colleges.find((c) => c.slug === collegeSlug);
-  if (!college) notFound();
+  const { school: schoolEnc, college: collegeEnc } = use(params);
+  const schoolName = decodeURIComponent(schoolEnc);
+  const collegeName = decodeURIComponent(collegeEnc);
+
+  const [data, setData] = useState<DetailResp | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const url = `/api/reviews/detail?school=${encodeURIComponent(schoolName)}&college=${encodeURIComponent(collegeName)}`;
+    apiGet<DetailResp>(url)
+      .then((res) => setData(res))
+      .catch((e) => setError(e.message || "加载失败"))
+      .finally(() => setLoading(false));
+  }, [schoolName, collegeName]);
+
+  if (loading) {
+    return (
+      <div className={dashStyles.content}>
+        <div className={styles.crumb}>
+          <Link href="/dashboard/reviews">院校列表</Link>
+          <span className={styles.crumbSep}>/</span>
+          <span className={styles.crumbCurrent}>加载中…</span>
+        </div>
+        <p className={dashStyles.pageSub}>正在加载评价数据…</p>
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className={dashStyles.content}>
+        <div className={styles.crumb}>
+          <Link href="/dashboard/reviews">院校列表</Link>
+        </div>
+        <div className={dashStyles.emptyState}>{error || "暂无评价数据"}</div>
+      </div>
+    );
+  }
+
+  const { school, college } = data;
 
   return (
     <div className={dashStyles.content}>
@@ -51,7 +92,7 @@ export default function CollegePage({
       <div className={styles.crumb}>
         <Link href="/dashboard/reviews">院校列表</Link>
         <span className={styles.crumbSep}>/</span>
-        <Link href={`/dashboard/reviews/${school.slug}`}>{school.name}</Link>
+        <Link href={`/dashboard/reviews/${encodeURIComponent(school.name)}`}>{school.name}</Link>
         <span className={styles.crumbSep}>/</span>
         <span className={styles.crumbCurrent}>{college.name}</span>
       </div>
@@ -62,28 +103,32 @@ export default function CollegePage({
       </p>
 
       {/* AI Summary */}
-      <div className={styles.aiBlock}>
-        <span className={styles.aiTag}>AI 综合摘要</span>
-        <p className={styles.aiText}>{college.aiSummary}</p>
-      </div>
+      {college.aiSummary && (
+        <div className={styles.aiBlock}>
+          <span className={styles.aiTag}>AI 综合摘要</span>
+          <p className={styles.aiText}>{college.aiSummary}</p>
+        </div>
+      )}
 
       {/* Dimensions */}
-      {college.dimensions.map((dim) => (
-        <div key={dim.key} className={styles.dimension}>
-          <div className={styles.dimHeader}>
-            <div className={styles.dimIcon}>{DIM_ICONS[dim.key] || "评"}</div>
-            <div>
-              <h2 className={styles.dimTitle}>{dim.title}</h2>
-              <span className={styles.dimHint}>{DIM_HINTS[dim.key]}</span>
+      {college.dimensions.map((dim) =>
+        dim.reviews.length > 0 ? (
+          <div key={dim.key} className={styles.dimension}>
+            <div className={styles.dimHeader}>
+              <div className={styles.dimIcon}>{DIM_ICONS[dim.key] || "评"}</div>
+              <div>
+                <h2 className={styles.dimTitle}>{dim.title}</h2>
+                <span className={styles.dimHint}>{DIM_HINTS[dim.key]}</span>
+              </div>
+            </div>
+            <div className={styles.reviewList}>
+              {dim.reviews.map((r, i) => (
+                <ReviewCard key={i} r={r} />
+              ))}
             </div>
           </div>
-          <div className={styles.reviewList}>
-            {dim.reviews.map((r, i) => (
-              <ReviewCard key={i} r={r} />
-            ))}
-          </div>
-        </div>
-      ))}
+        ) : null
+      )}
 
       {/* Pros / Cons */}
       {(college.pros.length > 0 || college.cons.length > 0) && (
@@ -128,33 +173,35 @@ export default function CollegePage({
       )}
 
       {/* Mentor cards */}
-      <div className={styles.mentorZone}>
-        <h2 className={styles.mentorZoneTitle}>{college.name}的学长学姐</h2>
-        <p className={styles.mentorZoneSub}>
-          以上评价来自经过身份验证的在读学长学姐。想深入了解，可以预约一次咨询。
-        </p>
-        <div className={styles.mentorGrid}>
-          {college.mentors.map((m) => (
-            <div key={m.slug} className={styles.mentorCard}>
-              <div className={styles.mentorCardTop}>
-                <div className={styles.mentorAvatar}>
-                  {m.displayTitle === "学姐" ? "姐" : "兄"}
-                </div>
-                <div>
-                  <div className={styles.mentorName}>
-                    {m.major} · {m.displayTitle}
+      {college.mentors.length > 0 && (
+        <div className={styles.mentorZone}>
+          <h2 className={styles.mentorZoneTitle}>{college.name}的学长学姐</h2>
+          <p className={styles.mentorZoneSub}>
+            以上评价来自经过身份验证的在读学长学姐。想深入了解，可以预约一次咨询。
+          </p>
+          <div className={styles.mentorGrid}>
+            {college.mentors.map((m) => (
+              <div key={m.slug} className={styles.mentorCard}>
+                <div className={styles.mentorCardTop}>
+                  <div className={styles.mentorAvatar}>
+                    {m.displayTitle === "学姐" ? "姐" : "兄"}
                   </div>
-                  <div className={styles.mentorMeta}>{m.year}</div>
+                  <div>
+                    <div className={styles.mentorName}>
+                      {m.major} · {m.displayTitle}
+                    </div>
+                    <div className={styles.mentorMeta}>{m.year}</div>
+                  </div>
                 </div>
+                <p className={styles.mentorOneLiner}>{m.oneLiner}</p>
+                <Link href={`/dashboard/mentors/${m.slug}`} className={styles.mentorCta}>
+                  查看完整资料 →
+                </Link>
               </div>
-              <p className={styles.mentorOneLiner}>{m.oneLiner}</p>
-              <Link href={`/dashboard/mentors/${m.slug}`} className={styles.mentorCta}>
-                查看完整资料 →
-              </Link>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
