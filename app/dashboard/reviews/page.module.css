@@ -1,0 +1,74 @@
+/* Reviews listing — dashboard embedded */
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.card {
+  border: 1px solid #ececec;
+  border-radius: 10px;
+  padding: 22px 24px 18px;
+  background: #ffffff;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.card:hover {
+  border-color: #d0cfc8;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.cardTop {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.cardName {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 600;
+  color: #1f1f1f;
+}
+.cardTags {
+  display: flex;
+  gap: 5px;
+}
+.cardTag {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  background: #f4f3ee;
+  color: #6e6e68;
+}
+.cardArrow {
+  margin-left: auto;
+  font-size: 14px;
+  color: #bbb;
+}
+
+.cardColleges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.collegeChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  background: #fafaf7;
+  border: 1px solid #ececec;
+  border-radius: 5px;
+  font-size: 12px;
+  color: #4a4a45;
+}
+.collegeCount {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent, #b8472d);
+}

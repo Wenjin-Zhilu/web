@@ -1,5 +1,6 @@
 import Link from "next/link";
 import styles from "./mentor.module.css";
+import WeChatFloat from "../components/WeChatFloat";
 
 const STATS = [
   {
@@ -262,6 +263,8 @@ export default function MentorLanding() {
           </div>
         </section>
       </main>
+
+      <WeChatFloat accent="#3d5c4d" />
 
       <footer className={styles.footer}>
         <div>© 2026 问津 · 指路</div>

@@ -13,6 +13,7 @@ type MentorListItem = {
   college: string | null;
   major: string | null;
   year: string | null;
+  highSchool: string | null;
   bio: string | null;
   tags: string[] | null;
   ratingAvg: string;
@@ -193,7 +194,7 @@ export default function MatchPage() {
                   {m.name || "匿名学长学姐"} · {m.school || "—"}
                 </h3>
                 <p className={styles.cardSub}>
-                  {m.major || "—"} · {m.year || "—"} · 评分 {Number(m.ratingAvg).toFixed(1)}
+                  {m.highSchool ? `${m.highSchool} · ` : ""}{m.major || "—"} · {m.year || "—"} · 评分 {Number(m.ratingAvg).toFixed(1)}
                 </p>
                 {m.bio && (
                   <p style={{ fontSize: 13, color: "#4a4a45", marginTop: 10, lineHeight: 1.6 }}>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import styles from "./page.module.css";
+import WeChatFloat from "./components/WeChatFloat";
 
 const WHY_REASONS = [
   {
@@ -122,6 +123,7 @@ export default function Home() {
           <a href="#why">为什么需要问津</a>
           <a href="#how">如何参与</a>
           <Link href="/questions">家长都在问</Link>
+          <Link href="/auth">院校评价</Link>
           <Link href="/auth?mode=login" className={styles.navBtn}>
             登录
           </Link>
@@ -148,6 +150,9 @@ export default function Home() {
             <div className={styles.heroCta}>
               <Link href="/auth" className={styles.btnPrimary}>
                 看看能问谁 <span>→</span>
+              </Link>
+              <Link href="/auth" className={styles.btnGhost}>
+                免费看院校评价
               </Link>
               <Link href="/questions" className={styles.btnGhost}>
                 看看家长都在问什么
@@ -337,6 +342,8 @@ export default function Home() {
           </div>
         </section>
       </main>
+
+      <WeChatFloat accent="#b8472d" />
 
       <footer className={styles.footer} id="about">
         <div className={styles.footerTop}>

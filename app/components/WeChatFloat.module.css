@@ -1,0 +1,101 @@
+.wrap {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.16), 0 4px 12px rgba(0, 0, 0, 0.08);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  opacity: 0;
+  transform: translateY(10px) scale(0.95);
+  animation: cardIn 0.24s ease-out forwards;
+}
+
+@keyframes cardIn {
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.qr {
+  width: 240px;
+  height: 240px;
+  border-radius: 12px;
+  object-fit: contain;
+}
+
+.label {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f1f1f;
+  margin: 0;
+  font-family: var(--serif);
+}
+
+.sub {
+  font-size: 13px;
+  color: #9a9a93;
+  margin: 0;
+}
+
+.btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 24px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: var(--sans);
+  color: #ffffff;
+  background: var(--wechat-bg, #b8472d);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  white-space: nowrap;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.22);
+}
+
+.btn svg {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .wrap {
+    bottom: 20px;
+    right: 20px;
+  }
+  .btnText {
+    display: none;
+  }
+  .btn {
+    padding: 14px;
+  }
+  .card {
+    padding: 20px;
+  }
+  .qr {
+    width: 200px;
+    height: 200px;
+  }
+}

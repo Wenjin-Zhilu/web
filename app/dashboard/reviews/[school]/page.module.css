@@ -1,0 +1,111 @@
+/* School page — college directory (dashboard) */
+
+.crumb {
+  margin-bottom: 16px;
+}
+.crumb a {
+  font-size: 13px;
+  color: #9a9a93;
+  text-decoration: none;
+}
+.crumb a:hover {
+  color: #4a4a45;
+}
+
+.tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  background: #f4f3ee;
+  color: #6e6e68;
+  margin-left: 8px;
+  vertical-align: middle;
+  font-family: var(--sans);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.collegeCard {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  border: 1px solid #ececec;
+  border-radius: 10px;
+  padding: 24px;
+  background: #ffffff;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.collegeCard:hover {
+  border-color: #d0cfc8;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+.collegeCardLeft {
+  flex: 1;
+  min-width: 0;
+}
+.collegeCardName {
+  font-family: var(--serif);
+  font-size: 19px;
+  font-weight: 600;
+  color: #1f1f1f;
+  margin: 0 0 4px;
+}
+.collegeCardMajors {
+  font-size: 12px;
+  color: #9a9a93;
+  margin-bottom: 10px;
+}
+.collegeCardSummary {
+  font-size: 13px;
+  line-height: 1.8;
+  color: #4a4a45;
+  margin: 0;
+}
+.collegeCardRight {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.collegeCardStat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.collegeCardNum {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--accent, #b8472d);
+  line-height: 1;
+}
+.collegeCardLabel {
+  font-size: 11px;
+  color: #9a9a93;
+  margin-top: 3px;
+}
+.collegeCardArrow {
+  font-size: 14px;
+  color: #bbb;
+}
+
+@media (max-width: 760px) {
+  .collegeCard {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 18px;
+  }
+  .collegeCardRight {
+    flex-direction: row;
+    gap: 12px;
+  }
+}

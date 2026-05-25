@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { parentAuthClient, mentorAuthClient } from "@/lib/auth-client";
 import { Sidebar } from "./_components/Sidebar";
 import styles from "./dashboard.module.css";
+import WeChatFloat from "../components/WeChatFloat";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -38,6 +39,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className={styles.main} style={{ ["--accent" as string]: accent } as React.CSSProperties}>
         {children}
       </div>
+      <WeChatFloat accent={accent} />
     </div>
   );
 }
