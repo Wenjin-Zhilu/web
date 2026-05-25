@@ -167,6 +167,9 @@ export default function VerifyPage() {
           验证码已发送到{" "}
           <strong>{email ? maskEmail(email) : "你的邮箱"}</strong>
         </p>
+        <p className={styles.junkHint}>
+          没收到邮件？请检查垃圾邮件 / Junk 文件夹。
+        </p>
 
         <div className={styles.codeRow} onPaste={handlePaste}>
           {code.map((digit, i) => (

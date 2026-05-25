@@ -342,6 +342,12 @@ const PARENT_ROLE_LABEL: Record<string, string> = {
   teacher: "老师",
   other: "其他",
 };
+const ENUM_TO_ROLE: Record<string, string> = {
+  student: "学生本人",
+  parent: "家长",
+  teacher: "老师",
+  other: "其他",
+};
 const STAGE_LABEL: Record<string, string> = {
   senior_pre: "高考前",
   senior_post: "高考后",
@@ -349,8 +355,56 @@ const STAGE_LABEL: Record<string, string> = {
   gap: "Gap",
   other: "其他",
 };
+const ENUM_TO_STAGE: Record<string, string> = {
+  senior_pre: "高三 · 出分前",
+  senior_post: "高三 · 出分后",
+  g10_g11: "高一 / 高二",
+  gap: "复读",
+  other: "其他",
+};
+const ROLE_OPTS = ["学生本人", "家长", "老师", "其他"];
+const ROLE_TO_ENUM: Record<string, string> = { "学生本人": "student", "家长": "parent", "老师": "teacher", "其他": "other" };
+const STAGE_OPTS = ["高三 · 出分前", "高三 · 出分后", "高一 / 高二", "复读", "其他"];
+const STAGE_TO_ENUM: Record<string, string> = { "高三 · 出分前": "senior_pre", "高三 · 出分后": "senior_post", "高一 / 高二": "g10_g11", "复读": "gap", "其他": "other" };
+
 function ParentProfileView({ profile }: { profile: ParentProfile | null }) {
   const accent = "#b8472d";
+  const [editing, setEditing] = useState(false);
+  const [current, setCurrent] = useState(profile);
+
+  const [role, setRole] = useState(current?.parentRole ? ENUM_TO_ROLE[current.parentRole] || "" : "");
+  const [province, setProvince] = useState(current?.province || "");
+  const [stage, setStage] = useState(current?.stage ? ENUM_TO_STAGE[current.stage] || "" : "");
+  const [highSchool, setHighSchool] = useState((current as Record<string, unknown>)?.highSchool as string || "");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const canSubmit = role && province.trim() && stage && highSchool.trim();
+
+  const onSave = async () => {
+    if (!canSubmit) return;
+    setSaving(true);
+    setError("");
+    try {
+      await apiSend("/api/parent-profile", "POST", {
+        parentRole: ROLE_TO_ENUM[role],
+        province: province.trim(),
+        stage: STAGE_TO_ENUM[stage],
+        highSchool: highSchool.trim(),
+      });
+      setCurrent({
+        ...current!,
+        parentRole: ROLE_TO_ENUM[role],
+        province: province.trim(),
+        stage: STAGE_TO_ENUM[stage],
+      });
+      setEditing(false);
+    } catch (e) {
+      setError((e as Error).message || "保存失败");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <>
@@ -360,15 +414,70 @@ function ParentProfileView({ profile }: { profile: ParentProfile | null }) {
         <span className={styles.crumbCurrent}>我的资料</span>
       </div>
       <div className={styles.content}>
-        <h1 className={styles.pageTitle}>我的资料</h1>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+          <h1 className={styles.pageTitle}>我的资料</h1>
+          {current && !editing && (
+            <button
+              className={`${styles.btn} ${styles.btnGhost}`}
+              onClick={() => setEditing(true)}
+            >
+              编辑
+            </button>
+          )}
+        </div>
         <p className={styles.pageSub}>你的基本信息。</p>
 
-        {profile ? (
+        {editing ? (
+          <div style={{ maxWidth: 480 }}>
+            <div className={styles.field}>
+              <label className={styles.label}>你是？</label>
+              <div className={styles.filterPills}>
+                {ROLE_OPTS.map((r) => (
+                  <button key={r} type="button" className={`${styles.filterPill} ${role === r ? styles.filterPillActive : ""}`} onClick={() => setRole(r)}>{r}</button>
+                ))}
+              </div>
+            </div>
+            <div className={styles.field}>
+              <label className={styles.label}>高考地区</label>
+              <input className={styles.input} placeholder="例如：上海、浙江、江苏…" value={province} onChange={(e) => setProvince(e.target.value)} />
+            </div>
+            <div className={styles.field}>
+              <label className={styles.label}>目前阶段</label>
+              <div className={styles.filterPills}>
+                {STAGE_OPTS.map((s) => (
+                  <button key={s} type="button" className={`${styles.filterPill} ${stage === s ? styles.filterPillActive : ""}`} onClick={() => setStage(s)}>{s}</button>
+                ))}
+              </div>
+            </div>
+            <div className={styles.field}>
+              <label className={styles.label}>高中学校</label>
+              <input className={styles.input} placeholder="例如：上海中学、复旦附中…" value={highSchool} onChange={(e) => setHighSchool(e.target.value)} />
+            </div>
+            {error && <p style={{ color: "#a4391a", fontSize: 13, marginBottom: 10 }}>{error}</p>}
+            <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
+              <button
+                className={`${styles.btn} ${styles.btnPrimary}`}
+                style={{ background: accent }}
+                disabled={!canSubmit || saving}
+                onClick={onSave}
+              >
+                {saving ? "保存中…" : "保存"}
+              </button>
+              <button
+                className={`${styles.btn} ${styles.btnGhost}`}
+                onClick={() => setEditing(false)}
+                disabled={saving}
+              >
+                取消
+              </button>
+            </div>
+          </div>
+        ) : current ? (
           <div className={styles.grid2}>
-            <InfoCard label="身份" value={profile.parentRole ? PARENT_ROLE_LABEL[profile.parentRole] || profile.parentRole : "—"} />
-            <InfoCard label="高考地区" value={profile.province || "—"} />
-            <InfoCard label="阶段" value={profile.stage ? STAGE_LABEL[profile.stage] || profile.stage : "—"} />
-            <InfoCard label="高中学校" value={(profile as Record<string, unknown>).highSchool as string || "—"} />
+            <InfoCard label="身份" value={current.parentRole ? PARENT_ROLE_LABEL[current.parentRole] || current.parentRole : "—"} />
+            <InfoCard label="高考地区" value={current.province || "—"} />
+            <InfoCard label="阶段" value={current.stage ? STAGE_LABEL[current.stage] || current.stage : "—"} />
+            <InfoCard label="高中学校" value={(current as Record<string, unknown>).highSchool as string || "—"} />
           </div>
         ) : (
           <div className={styles.emptyState} style={{ marginTop: 16 }}>

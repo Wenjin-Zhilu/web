@@ -54,6 +54,12 @@
   font-weight: 500;
 }
 
+.junkHint {
+  font-size: 12px;
+  color: #9a9a93;
+  margin: -20px 0 24px;
+}
+
 .codeRow {
   display: flex;
   justify-content: center;
