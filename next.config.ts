@@ -10,6 +10,7 @@ const nextConfig: NextConfig = {
   output: "standalone",
   async rewrites() {
     return [
+      { source: "/api/auth/phone/:path*", destination: `${apiURL}/api/auth/phone/:path*` },
       { source: "/api/auth/:path*", destination: `${apiURL}/api/auth/:path*` },
       { source: "/api/mauth/:path*", destination: `${apiURL}/api/mauth/:path*` },
       { source: "/api/call/:path*", destination: `${apiURL}/api/call/:path*` },

@@ -24,7 +24,6 @@ function getSafeLocalRedirect(value: string | null) {
   if (!value || !value.startsWith("/") || value.startsWith("//")) {
     return "/dashboard";
   }
-
   return value;
 }
 
@@ -40,8 +39,10 @@ function AuthForm() {
   const authClient = getAuthClient(role);
 
   const [mode, setMode] = useState<"login" | "register">(initialMode);
+  const [authMethod, setAuthMethod] = useState<"phone" | "email">(isMentor ? "email" : "phone");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -61,7 +62,58 @@ function AuthForm() {
     return true;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handlePhoneSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    if (!/^1\d{10}$/.test(phone)) {
+      setError("请输入有效的 11 位手机号");
+      return;
+    }
+    if (password.length < 8) {
+      setError("密码至少 8 个字符");
+      return;
+    }
+    setLoading(true);
+    try {
+      if (mode === "register") {
+        const res = await fetch("/api/auth/phone/send-code", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setError(data.error || "发送失败");
+          return;
+        }
+        sessionStorage.setItem("verify_phone", phone);
+        sessionStorage.setItem("verify_phone_pwd", password);
+        sessionStorage.setItem("auth_redirect", redirect);
+        sessionStorage.setItem("auth_role", role);
+        if (ref) sessionStorage.setItem("auth_ref", ref);
+        router.replace("/auth/verify");
+      } else {
+        const res = await fetch("/api/auth/phone/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ phone, password }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setError(data.error || "登录失败");
+        } else {
+          router.replace(redirect);
+        }
+      }
+    } catch {
+      setError("网络错误,请重试");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
@@ -137,12 +189,10 @@ function AuthForm() {
   return (
     <div className={styles.page}>
       <div className={styles.card}>
-        {/* Back to home */}
         <Link href="/" className={styles.backLink}>
           ← 返回首页
         </Link>
 
-        {/* Role indicator */}
         <div className={styles.roleTag} style={{ color: accentColor }}>
           {isMentor ? "指路人" : "家长 / 学生"}
         </div>
@@ -156,67 +206,130 @@ function AuthForm() {
             : "开始问津,找到你需要的学长学姐"}
         </p>
 
-        <form onSubmit={handleSubmit} className={styles.form}>
-          <div className={styles.field}>
-            <label className={styles.label}>邮箱</label>
-            <input
-              type="email"
-              className={styles.input}
-              placeholder={
-                isMentor && mode === "register"
-                  ? "xxx@xxx.edu.cn"
-                  : "your@email.com"
-              }
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              style={{
-                borderColor: error ? "#dc2626" : undefined,
-              }}
-            />
+        {!isMentor && (
+          <div className={styles.methodToggle}>
+            <button
+              className={`${styles.methodBtn} ${authMethod === "phone" ? styles.methodActive : ""}`}
+              style={authMethod === "phone" ? { color: accentColor } : undefined}
+              onClick={() => { setAuthMethod("phone"); setError(""); }}
+            >
+              手机号
+            </button>
+            <button
+              className={`${styles.methodBtn} ${authMethod === "email" ? styles.methodActive : ""}`}
+              style={authMethod === "email" ? { color: accentColor } : undefined}
+              onClick={() => { setAuthMethod("email"); setError(""); }}
+            >
+              邮箱
+            </button>
           </div>
-          <div className={styles.field}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-              <label className={styles.label}>密码</label>
-              {mode === "login" && (
-                <Link
-                  href={`/auth/forgot?role=${role}`}
-                  style={{
-                    fontSize: 12,
-                    color: accentColor,
-                    textDecoration: "none",
-                  }}
-                >
-                  忘记密码?
-                </Link>
-              )}
+        )}
+
+        {authMethod === "phone" ? (
+          <form onSubmit={handlePhoneSubmit} className={styles.form}>
+            <div className={styles.field}>
+              <label className={styles.label}>手机号</label>
+              <input
+                type="tel"
+                className={styles.input}
+                placeholder="请输入 11 位手机号"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 11))}
+                required
+                style={{ borderColor: error ? "#dc2626" : undefined }}
+              />
             </div>
-            <input
-              type="password"
-              className={styles.input}
-              placeholder="至少 8 个字符"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={8}
-            />
-          </div>
+            <div className={styles.field}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                <label className={styles.label}>密码</label>
+              </div>
+              <input
+                type="password"
+                className={styles.input}
+                placeholder="至少 8 个字符"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={8}
+              />
+            </div>
 
-          {error && <p className={styles.error}>{error}</p>}
+            {error && <p className={styles.error}>{error}</p>}
 
-          <button
-            type="submit"
-            className={styles.submitBtn}
-            style={{ background: accentColor, borderColor: accentColor }}
-            disabled={loading}
-          >
-            {loading
-              ? "处理中..."
-              : mode === "register"
-                ? "注册"
-                : "登录"}
-          </button>
-        </form>
+            <button
+              type="submit"
+              className={styles.submitBtn}
+              style={{ background: accentColor, borderColor: accentColor }}
+              disabled={loading}
+            >
+              {loading
+                ? "处理中..."
+                : mode === "register"
+                  ? "获取验证码"
+                  : "登录"}
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={handleEmailSubmit} className={styles.form}>
+            <div className={styles.field}>
+              <label className={styles.label}>邮箱</label>
+              <input
+                type="email"
+                className={styles.input}
+                placeholder={
+                  isMentor && mode === "register"
+                    ? "xxx@xxx.edu.cn"
+                    : "your@email.com"
+                }
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                style={{ borderColor: error ? "#dc2626" : undefined }}
+              />
+            </div>
+            <div className={styles.field}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                <label className={styles.label}>密码</label>
+                {mode === "login" && (
+                  <Link
+                    href={`/auth/forgot?role=${role}`}
+                    style={{
+                      fontSize: 12,
+                      color: accentColor,
+                      textDecoration: "none",
+                    }}
+                  >
+                    忘记密码?
+                  </Link>
+                )}
+              </div>
+              <input
+                type="password"
+                className={styles.input}
+                placeholder="至少 8 个字符"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={8}
+              />
+            </div>
+
+            {error && <p className={styles.error}>{error}</p>}
+
+            <button
+              type="submit"
+              className={styles.submitBtn}
+              style={{ background: accentColor, borderColor: accentColor }}
+              disabled={loading}
+            >
+              {loading
+                ? "处理中..."
+                : mode === "register"
+                  ? "注册"
+                  : "登录"}
+            </button>
+          </form>
+        )}
 
         <div className={styles.switchMode}>
           {mode === "register" ? (
@@ -225,10 +338,7 @@ function AuthForm() {
               <button
                 className={styles.switchBtn}
                 style={{ color: accentColor }}
-                onClick={() => {
-                  setMode("login");
-                  setError("");
-                }}
+                onClick={() => { setMode("login"); setError(""); }}
               >
                 去登录
               </button>
@@ -239,10 +349,7 @@ function AuthForm() {
               <button
                 className={styles.switchBtn}
                 style={{ color: accentColor }}
-                onClick={() => {
-                  setMode("register");
-                  setError("");
-                }}
+                onClick={() => { setMode("register"); setError(""); }}
               >
                 去注册
               </button>

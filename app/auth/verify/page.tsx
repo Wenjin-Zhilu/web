@@ -17,6 +17,11 @@ function maskEmail(email: string): string {
   return `${masked}@${domain}`;
 }
 
+function maskPhone(phone: string): string {
+  if (phone.length !== 11) return phone;
+  return phone.slice(0, 3) + "****" + phone.slice(7);
+}
+
 export default function VerifyPage() {
   const router = useRouter();
   const [code, setCode] = useState(["", "", "", "", "", ""]);
@@ -26,6 +31,15 @@ export default function VerifyPage() {
     if (typeof window === "undefined") return "";
     return sessionStorage.getItem("verify_email") || "";
   });
+  const [phone] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return sessionStorage.getItem("verify_phone") || "";
+  });
+  const [phonePwd] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return sessionStorage.getItem("verify_phone_pwd") || "";
+  });
+  const isPhoneVerify = !!phone;
   const [role] = useState(() => {
     if (typeof window === "undefined") return "parent" as const;
     return sessionStorage.getItem("auth_role") === "mentor" ? "mentor" as const : "parent" as const;
@@ -44,10 +58,29 @@ export default function VerifyPage() {
     }
   }, [countdown]);
 
-  // Focus first input on mount
   useEffect(() => {
     inputRefs.current[0]?.focus();
   }, []);
+
+  const onSuccess = useCallback(async () => {
+    const redirectTo = sessionStorage.getItem("auth_redirect") || "/dashboard";
+    const refCode = sessionStorage.getItem("auth_ref");
+    sessionStorage.removeItem("verify_email");
+    sessionStorage.removeItem("verify_phone");
+    sessionStorage.removeItem("verify_phone_pwd");
+    sessionStorage.removeItem("auth_redirect");
+    sessionStorage.removeItem("auth_role");
+    sessionStorage.removeItem("auth_ref");
+    if (refCode) {
+      try {
+        await api("/api/mentors/me/claim-invite", {
+          method: "POST",
+          body: JSON.stringify({ inviteCode: refCode }),
+        });
+      } catch {}
+    }
+    router.replace(redirectTo);
+  }, [router]);
 
   const verifyCode = useCallback(async (codeToVerify: string[]) => {
     if (verifyingRef.current) return;
@@ -63,29 +96,36 @@ export default function VerifyPage() {
     setError("");
 
     try {
-      const { error: verifyError } =
-        await authClient.emailOtp.verifyEmail({
-          email,
-          otp: fullCode,
+      if (isPhoneVerify) {
+        const res = await fetch("/api/auth/phone/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ phone, code: fullCode, password: phonePwd }),
         });
-      if (verifyError) {
-        setError(verifyError.message || "验证失败,请重试");
-      } else {
-        const redirectTo = sessionStorage.getItem("auth_redirect") || "/dashboard";
-        const refCode = sessionStorage.getItem("auth_ref");
-        sessionStorage.removeItem("verify_email");
-        sessionStorage.removeItem("auth_redirect");
-        sessionStorage.removeItem("auth_role");
-        sessionStorage.removeItem("auth_ref");
-        if (refCode) {
-          try {
-            await api("/api/mentors/me/claim-invite", {
-              method: "POST",
-              body: JSON.stringify({ inviteCode: refCode }),
-            });
-          } catch {}
+        const data = await res.json();
+        if (!res.ok) {
+          setError(data.error || "验证失败,请重试");
+        } else {
+          await fetch("/api/auth/phone/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ phone, password: phonePwd }),
+          });
+          await onSuccess();
         }
-        router.replace(redirectTo);
+      } else {
+        const { error: verifyError } =
+          await authClient.emailOtp.verifyEmail({
+            email,
+            otp: fullCode,
+          });
+        if (verifyError) {
+          setError(verifyError.message || "验证失败,请重试");
+        } else {
+          await onSuccess();
+        }
       }
     } catch {
       setError("网络错误,请重试");
@@ -93,7 +133,7 @@ export default function VerifyPage() {
       verifyingRef.current = false;
       setLoading(false);
     }
-  }, [email, router]);
+  }, [email, phone, phonePwd, isPhoneVerify, onSuccess]);
 
   const handleChange = (index: number, value: string) => {
     if (!/^\d*$/.test(value)) return;
@@ -143,10 +183,19 @@ export default function VerifyPage() {
     setCountdown(60);
 
     try {
-      await authClient.emailOtp.sendVerificationOtp({
-        email,
-        type: "email-verification",
-      });
+      if (isPhoneVerify) {
+        const res = await fetch("/api/auth/phone/send-code", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone }),
+        });
+        if (!res.ok) setError("发送失败,请重试");
+      } else {
+        await authClient.emailOtp.sendVerificationOtp({
+          email,
+          type: "email-verification",
+        });
+      }
     } catch {
       setError("发送失败,请重试");
     }
@@ -162,14 +211,24 @@ export default function VerifyPage() {
           ← 返回
         </Link>
 
-        <h1 className={styles.title}>验证邮箱</h1>
+        <h1 className={styles.title}>
+          {isPhoneVerify ? "验证手机号" : "验证邮箱"}
+        </h1>
         <p className={styles.subtitle}>
           验证码已发送到{" "}
-          <strong>{email ? maskEmail(email) : "你的邮箱"}</strong>
+          <strong>
+            {isPhoneVerify
+              ? maskPhone(phone)
+              : email
+                ? maskEmail(email)
+                : "你的邮箱"}
+          </strong>
         </p>
-        <p className={styles.junkHint}>
-          没收到邮件？请检查垃圾邮件 / Junk 文件夹。
-        </p>
+        {!isPhoneVerify && (
+          <p className={styles.junkHint}>
+            没收到邮件？请检查垃圾邮件 / Junk 文件夹。
+          </p>
+        )}
 
         <div className={styles.codeRow} onPaste={handlePaste}>
           {code.map((digit, i) => (

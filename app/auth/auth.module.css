@@ -55,6 +55,35 @@
   line-height: 1.7;
 }
 
+.methodToggle {
+  display: flex;
+  gap: 0;
+  margin-bottom: 22px;
+  border: 1px solid #dedcd2;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.methodBtn {
+  flex: 1;
+  padding: 8px 0;
+  border: none;
+  background: none;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: #9a9a93;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.methodBtn:not(:last-child) {
+  border-right: 1px solid #dedcd2;
+}
+.methodActive {
+  background: #fafaf7;
+  font-weight: 600;
+}
+
 .form {
   display: flex;
   flex-direction: column;
