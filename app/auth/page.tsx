@@ -93,15 +93,14 @@ function AuthForm() {
         if (ref) sessionStorage.setItem("auth_ref", ref);
         router.replace("/auth/verify");
       } else {
-        const res = await fetch("/api/auth/phone/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ phone, password }),
+        const { error: signInError } = await authClient.signIn.email({
+          email: `${phone}@phone.local`,
+          password,
         });
-        const data = await res.json();
-        if (!res.ok) {
-          setError(data.error || "登录失败");
+        if (signInError) {
+          setError(signInError.message === "Invalid email or password"
+            ? "手机号或密码错误"
+            : signInError.message || "登录失败");
         } else {
           router.replace(redirect);
         }

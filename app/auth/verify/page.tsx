@@ -107,13 +107,15 @@ export default function VerifyPage() {
         if (!res.ok) {
           setError(data.error || "验证失败,请重试");
         } else {
-          await fetch("/api/auth/phone/login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({ phone, password: phonePwd }),
+          const { error: signInError } = await authClient.signIn.email({
+            email: data.email,
+            password: phonePwd,
           });
-          await onSuccess();
+          if (signInError) {
+            setError(signInError.message || "自动登录失败,请手动登录");
+          } else {
+            await onSuccess();
+          }
         }
       } else {
         const { error: verifyError } =
