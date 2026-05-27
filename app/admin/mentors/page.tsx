@@ -1,9 +1,37 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import * as XLSX from "xlsx";
 import { apiGet, apiSend, formatDateTime, ApiError } from "@/lib/api";
 import styles from "../../dashboard/dashboard.module.css";
 import { MentorProfileView, type MentorFullProfile } from "../_components/MentorProfileView";
+
+type Dim = { note: string };
+type SchoolEval = {
+  career?: Dim; teaching?: Dim; life?: Dim; care?: Dim; practice?: Dim;
+  pros?: string; cons?: string;
+};
+type BoolText = { had: boolean; text: string };
+type PersonalExp = {
+  paths?: string[];
+  research?: BoolText; internship?: BoolText; competition?: BoolText;
+  zongping?: BoolText; program?: BoolText; transfer?: BoolText;
+  supplement?: string;
+};
+type IntroCard = {
+  displayInitial?: string; displayTitle?: string;
+  schoolEval?: SchoolEval; personalExp?: PersonalExp;
+};
+
+type ExportMentor = {
+  userId: string; email: string; name: string;
+  school: string | null; college: string | null; major: string | null;
+  year: string | null; highSchool: string | null; bio: string | null;
+  tags: string[] | null; majorCategory: string | null;
+  introCard: IntroCard | null;
+  ratingAvg: string; reviewsCount: number;
+  reviewedAt: string | null; createdAt: string;
+};
 
 const MAJOR_CATEGORIES = [
   "工学", "理学", "文学", "商学", "管理学", "法学", "医学", "艺术学", "教育学", "农学",
@@ -113,6 +141,88 @@ export default function AdminMentorsPage() {
     }
     return [...map.entries()].sort((a, b) => b[1].length - a[1].length);
   }, [filtered]);
+
+  const PATH_LABEL: Record<string, string> = {
+    postgrad_domestic: "保研/直博",
+    study_abroad: "出国留学",
+    kaoyan: "国内考研",
+    employment: "直接就业",
+    civil_exam: "考公/考编",
+    gap_other: "Gap/其它",
+  };
+
+  const [exporting, setExporting] = useState(false);
+
+  const exportExcel = async () => {
+    setExporting(true);
+    try {
+      const r = await apiGet<{ mentors: ExportMentor[] }>("/api/admin/mentors/export");
+      const all = r.mentors;
+      if (all.length === 0) { alert("暂无数据"); return; }
+
+      const rows = all.map((m) => {
+        const card = (m.introCard || {}) as IntroCard;
+        const se = card.schoolEval || {};
+        const pe = card.personalExp || {};
+        const bt = (v: BoolText | undefined) =>
+          v ? (v.had ? v.text || "有(未填详情)" : "") : "";
+        return {
+          "姓名": m.name || "",
+          "邮箱": m.email || "",
+          "学校": m.school || "",
+          "院系": m.college || "",
+          "专业": m.major || "",
+          "年级": m.year || "",
+          "高中": m.highSchool || "",
+          "方向": m.majorCategory || "",
+          "化名": card.displayInitial && card.displayTitle
+            ? `${card.displayInitial}${card.displayTitle}` : "",
+          "评分": Number(m.ratingAvg).toFixed(1),
+          "评价数": m.reviewsCount,
+          "标签": m.tags?.join("、") || "",
+          "自我介绍": m.bio || "",
+          "评价-职业规划引导": se.career?.note || "",
+          "评价-教学质量": se.teaching?.note || "",
+          "评价-就读体验": se.life?.note || "",
+          "评价-人文关怀": se.care?.note || "",
+          "评价-实践机会": se.practice?.note || "",
+          "评价-优势": se.pros || "",
+          "评价-不足": se.cons || "",
+          "当前路径": pe.paths?.map((p: string) => PATH_LABEL[p] || p).join("、") || "",
+          "科研": bt(pe.research),
+          "实习": bt(pe.internship),
+          "竞赛": bt(pe.competition),
+          "综评/强基": bt(pe.zongping),
+          "特殊项目/班型": bt(pe.program),
+          "转专业": bt(pe.transfer),
+          "经历补充": pe.supplement || "",
+          "通过时间": m.reviewedAt ? formatDateTime(m.reviewedAt) : "",
+          "注册时间": formatDateTime(m.createdAt),
+        };
+      });
+
+      const ws = XLSX.utils.json_to_sheet(rows);
+      ws["!cols"] = [
+        { wch: 10 }, { wch: 24 }, { wch: 14 }, { wch: 18 },
+        { wch: 16 }, { wch: 8 }, { wch: 14 }, { wch: 8 },
+        { wch: 10 }, { wch: 6 }, { wch: 6 }, { wch: 20 },
+        { wch: 30 },
+        { wch: 30 }, { wch: 30 }, { wch: 30 }, { wch: 30 }, { wch: 30 },
+        { wch: 30 }, { wch: 30 },
+        { wch: 20 },
+        { wch: 24 }, { wch: 24 }, { wch: 24 }, { wch: 24 }, { wch: 24 }, { wch: 24 },
+        { wch: 30 },
+        { wch: 18 }, { wch: 18 },
+      ];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "学长学姐");
+      XLSX.writeFile(wb, `学长学姐_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    } catch (e) {
+      alert(e instanceof ApiError ? e.message : (e as Error).message);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const toggleCollapse = (school: string) => {
     setCollapsed((prev) => {
@@ -229,6 +339,23 @@ export default function AdminMentorsPage() {
               className={styles.input}
             />
           </div>
+          <button
+            onClick={exportExcel}
+            disabled={exporting || !mentors || mentors.length === 0}
+            style={{
+              padding: "7px 16px",
+              fontSize: 13,
+              background: "#1f1f1f",
+              color: "#fff",
+              border: "none",
+              borderRadius: 7,
+              cursor: exporting || !mentors || mentors.length === 0 ? "not-allowed" : "pointer",
+              opacity: exporting || !mentors || mentors.length === 0 ? 0.4 : 1,
+              fontFamily: "inherit",
+            }}
+          >
+            {exporting ? "导出中…" : "导出 Excel"}
+          </button>
           <div style={{ display: "flex", border: "1px solid #e0dfd8", borderRadius: 7, overflow: "hidden" }}>
             <button
               onClick={() => setView("list")}
