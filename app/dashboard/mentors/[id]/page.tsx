@@ -285,10 +285,7 @@ export default function MentorDetailPage() {
           >
             目前内测期请联系右下角客服预约档期。
           </div>
-          {/* 内测期：隐藏档期列表 / 空状态，统一引导联系客服
-          {openSlots.length === 0 ? (
-            <div className={styles.emptyState}>这位学长学姐暂时还没开放时段，过段时间再看看。</div>
-          ) : (
+          {openSlots.length > 0 && (
             <div className={styles.card}>
               {dayKeys.map((dk) => (
                 <div key={dk} style={{ marginBottom: 16 }}>
@@ -324,10 +321,9 @@ export default function MentorDetailPage() {
               ))}
             </div>
           )}
-          */}
         </div>
 
-        {/* 下单区 —— 内测期暂时不显示，统一引导联系客服
+        {/* 下单区 */}
         {openSlots.length > 0 && (
           <div className={styles.section}>
             <div className={styles.sectionHead}>
@@ -384,7 +380,6 @@ export default function MentorDetailPage() {
             </div>
           </div>
         )}
-        */}
       </div>
     </>
   );
