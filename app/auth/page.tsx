@@ -14,9 +14,9 @@ const HK_UNI_DOMAINS = [
 
 function isEduEmail(email: string): boolean {
   const lower = email.toLowerCase();
-  if (lower.endsWith(".edu.cn") || lower.endsWith(".edu")) return true;
   const domain = lower.split("@")[1];
   if (!domain) return false;
+  if (domain.includes(".edu")) return true;
   return HK_UNI_DOMAINS.some((d) => domain === d || domain.endsWith("." + d));
 }
 
@@ -51,7 +51,7 @@ function AuthForm() {
   const validateEmail = () => {
     if (isMentor && mode === "register") {
       if (!isEduEmail(email)) {
-        setError("指路人注册需使用大陆 .edu.cn 或受支持的香港高校邮箱");
+        setError("指路人注册需使用高校邮箱（含 .edu 的域名）或受支持的香港高校邮箱");
         return false;
       }
     }
