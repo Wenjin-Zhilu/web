@@ -272,6 +272,19 @@ export default function MentorDetailPage() {
           <div className={styles.sectionHead}>
             <h2 className={styles.sectionTitle}>可预约时段</h2>
           </div>
+          <div
+            style={{
+              background: "#fff7ed",
+              border: "1px solid #fed7aa",
+              color: "#9a3412",
+              padding: "10px 14px",
+              borderRadius: 8,
+              fontSize: 14,
+              marginBottom: 12,
+            }}
+          >
+            目前内测期请联系右下角客服预约档期。
+          </div>
           {openSlots.length === 0 ? (
             <div className={styles.emptyState}>这位学长学姐暂时还没开放时段，过段时间再看看。</div>
           ) : (
