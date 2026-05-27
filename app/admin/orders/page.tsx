@@ -57,7 +57,7 @@ type Filter = "all" | OrderStatus;
 function buildNotifyText(o: AdminOrder): string {
   const name = o.mentorName || "学长/学姐";
   const time = o.slotStartAt ? formatDateTime(o.slotStartAt) : "待确认";
-  return `${name}你好，恭喜你接到一条来自高中生家庭，在${time}的咨询订单，麻烦尽快登录网站确认哦！入口 https://mentor.wenjin-zhilu.com/`;
+  return `${name}你好，恭喜你接到一条来自高中生家庭，在${time}的咨询订单！请在预约时间前登录平台，准时进入通话。入口 https://mentor.wenjin-zhilu.com/`;
 }
 
 export default function AdminOrdersPage() {
