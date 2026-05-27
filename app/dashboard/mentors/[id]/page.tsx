@@ -267,7 +267,7 @@ export default function MentorDetailPage() {
         {/* 个人经历 */}
         {pExp && <PersonalExpView exp={pExp} />}
 
-        {/* 可选时段 */}
+        {/* 可预约时段 */}
         <div className={styles.section}>
           <div className={styles.sectionHead}>
             <h2 className={styles.sectionTitle}>可预约时段</h2>
