@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import { apiGet, apiSend, ApiError, formatDateTime } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import styles from "../dashboard.module.css";
@@ -42,6 +43,8 @@ function buildHourRange(day: Date, hStart: number, hEnd: number): Date[] {
   return out;
 }
 
+const WECHAT_DISMISS_KEY = "wechat_reminder_dismissed";
+
 export default function SlotsPage() {
   const { data: session } = useSession();
   const [slots, setSlots] = useState<Slot[]>([]);
@@ -56,6 +59,22 @@ export default function SlotsPage() {
   const [toRemove, setToRemove] = useState<Set<string>>(new Set()); // slot ids
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+
+  const [showWeChatReminder, setShowWeChatReminder] = useState(false);
+  const [dontShowAgain, setDontShowAgain] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && !localStorage.getItem(WECHAT_DISMISS_KEY)) {
+      setShowWeChatReminder(true);
+    }
+  }, []);
+
+  const dismissWeChatReminder = () => {
+    if (dontShowAgain) {
+      localStorage.setItem(WECHAT_DISMISS_KEY, "1");
+    }
+    setShowWeChatReminder(false);
+  };
 
   const reload = async () => {
     setLoading(true);
@@ -180,6 +199,89 @@ export default function SlotsPage() {
 
   return (
     <>
+      {showWeChatReminder && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.45)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 100,
+            padding: 16,
+          }}
+          onClick={(e) => { if (e.target === e.currentTarget) dismissWeChatReminder(); }}
+        >
+          <div
+            style={{
+              background: "#fff",
+              borderRadius: 12,
+              padding: "28px 24px 20px",
+              maxWidth: 380,
+              width: "100%",
+              textAlign: "center",
+            }}
+          >
+            <div style={{ fontSize: 17, fontWeight: 600, color: "#1f1f1f", marginBottom: 4 }}>
+              添加企业微信，接收订单提醒
+            </div>
+            <p style={{ fontSize: 13, color: "#6e6e68", lineHeight: 1.6, margin: "8px 0 16px" }}>
+              家长下单后我们会通过企业微信第一时间通知你，<strong>不加可能错过订单</strong>。我们承诺不会发送任何骚扰信息。
+            </p>
+            <Image
+              src="/wechat-qr.jpg"
+              alt="企业微信二维码"
+              width={200}
+              height={200}
+              unoptimized
+              style={{ borderRadius: 8, margin: "0 auto" }}
+            />
+            <p style={{ fontSize: 12, color: "#9a9a93", marginTop: 10 }}>
+              长按或扫码添加企业微信
+            </p>
+            <button
+              onClick={dismissWeChatReminder}
+              style={{
+                marginTop: 16,
+                width: "100%",
+                padding: "10px 0",
+                fontSize: 15,
+                fontWeight: 500,
+                border: "none",
+                borderRadius: 8,
+                background: accent,
+                color: "#fff",
+                cursor: "pointer",
+                fontFamily: "inherit",
+              }}
+            >
+              我知道了
+            </button>
+            <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 6,
+                marginTop: 12,
+                fontSize: 12,
+                color: "#9a9a93",
+                cursor: "pointer",
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={dontShowAgain}
+                onChange={(e) => setDontShowAgain(e.target.checked)}
+                style={{ accentColor: accent }}
+              />
+              不再显示
+            </label>
+          </div>
+        </div>
+      )}
+
       <div className={styles.topbar}>
         <span>指路</span>
         <span className={styles.crumbSep}>›</span>

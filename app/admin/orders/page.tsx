@@ -32,6 +32,7 @@ type AdminOrder = {
   mentorEmail: string;
   mentorSchool: string | null;
   mentorMajor: string | null;
+  slotStartAt: string | null;
 };
 
 const STATUS_LABEL: Record<OrderStatus, { label: string; cls: string }> = {
@@ -53,11 +54,18 @@ const PAY_LABEL: Record<PaymentStatus, { label: string; cls: string }> = {
 
 type Filter = "all" | OrderStatus;
 
+function buildNotifyText(o: AdminOrder): string {
+  const name = o.mentorName || "学长/学姐";
+  const time = o.slotStartAt ? formatDateTime(o.slotStartAt) : "待确认";
+  return `${name}你好，恭喜你接到一条来自高中生家庭，在${time}的咨询订单，麻烦尽快登录网站确认哦！入口 https://mentor.wenjin-zhilu.com/`;
+}
+
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<AdminOrder[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [filter, setFilter] = useState<Filter>("all");
   const [q, setQ] = useState("");
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   useEffect(() => {
     let cancel = false;
@@ -186,6 +194,7 @@ export default function AdminOrdersPage() {
                 <th>支付</th>
                 <th>金额</th>
                 <th>下单时间</th>
+                <th>通知</th>
               </tr>
             </thead>
             <tbody>
@@ -232,6 +241,30 @@ export default function AdminOrdersPage() {
                     </td>
                     <td style={{ color: "#6e6e68" }}>
                       {formatDateTime(o.createdAt)}
+                    </td>
+                    <td>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(buildNotifyText(o));
+                          setCopiedId(o.id);
+                          setTimeout(() => setCopiedId((prev) => prev === o.id ? null : prev), 2000);
+                        }}
+                        style={{
+                          padding: "4px 10px",
+                          fontSize: 12,
+                          border: "1px solid #d4d4cd",
+                          borderRadius: 5,
+                          background: copiedId === o.id ? "#3d5c4d" : "#fff",
+                          color: copiedId === o.id ? "#fff" : "#4a4a45",
+                          cursor: "pointer",
+                          fontFamily: "inherit",
+                          whiteSpace: "nowrap",
+                          transition: "all 0.15s",
+                        }}
+                        title={buildNotifyText(o)}
+                      >
+                        {copiedId === o.id ? "已复制" : "复制通知"}
+                      </button>
                     </td>
                   </tr>
                 );
