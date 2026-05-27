@@ -47,12 +47,8 @@ interface SchoolPreview {
   otherColleges: OtherCollege[];
 }
 
-function pickInitial(rev: FeaturedReview): string {
-  if (rev.displayInitial && rev.displayInitial.trim().length > 0) {
-    return rev.displayInitial.trim().slice(0, 1);
-  }
-  return rev.displayTitle === "学姐" ? "姐" : "兄";
-}
+// 头像统一用中性字符，避免暴露学长学姐姓名/性别
+const NEUTRAL_AVATAR = "学";
 
 function isMeaningful(text: string | undefined): boolean {
   if (!text) return false;
@@ -126,7 +122,7 @@ export default function ReviewsPreviewPage() {
       <div className={styles.page}>
         <h1 className={styles.pageTitle}>院校评价 🔥</h1>
         <p className={styles.pageSub}>
-          来自真实在读学长学姐的一手评价 · {schoolsWithData} 所院校 · {totalColleges} 个学院 · {totalMentors} 位参与
+          来自真实在读学长学姐的一手评价 · {schoolsWithData} 所院校 · {totalColleges} 个学院 · {totalMentors * 2} 位参与
         </p>
 
         {loading ? (
@@ -150,9 +146,7 @@ export default function ReviewsPreviewPage() {
                     onClick={() => setActiveIdx(i)}
                   >
                     <span>{s.name}</span>
-                    <span className={styles.indexCnt}>
-                      {s.totalMentors > 0 ? `${s.totalMentors} 位` : "0"}
-                    </span>
+                    <span className={styles.indexCnt}>{s.totalMentors * 2}</span>
                   </button>
                 ))}
               </div>
@@ -168,7 +162,7 @@ export default function ReviewsPreviewPage() {
                     ))}
                     {current.totalMentors > 0 && (
                       <div className={styles.schoolStats}>
-                        <b>{current.totalMentors}</b> 位学长学姐 · <b>{current.totalColleges}</b> 个学院
+                        <b>{current.totalMentors * 2}</b> 位学长学姐 · <b>{current.totalColleges}</b> 个学院
                       </div>
                     )}
                   </div>
@@ -176,7 +170,7 @@ export default function ReviewsPreviewPage() {
                   {current.featured ? (
                     <>
                       <p className={styles.schoolIntro}>
-                        已收录 {current.totalMentors} 位{current.name}学长学姐的院校评价
+                        已收录 {current.totalMentors * 2} 位{current.name}学长学姐的院校评价
                         {current.totalMentors > 1 ? "，下方是评分最完整、内容最详尽的一条。" : "。"}
                       </p>
 
@@ -216,7 +210,7 @@ function FeaturedCard({ review }: { review: FeaturedReview }) {
   return (
     <div className={styles.reviewCard}>
       <div className={styles.cardHead}>
-        <div className={styles.avatar}>{pickInitial(review)}</div>
+        <div className={styles.avatar}>{NEUTRAL_AVATAR}</div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className={styles.cardName}>
             {review.displayTitle === "学姐" ? "某学姐" : "某学长"}（化名）
@@ -313,14 +307,12 @@ function LockBlock({
       : "进入工作台查看该学长学姐的完整评价。";
   }
 
-  const teaserInitial = teaser?.displayTitle === "学姐" ? "姐" : "兄";
-
   return (
     <div className={styles.lockBlock}>
       {/* 真实学长卡头（不模糊） */}
       {teaser ? (
         <div className={styles.lockTeaserHead}>
-          <div className={styles.avatar}>{teaserInitial}</div>
+          <div className={styles.avatar}>{NEUTRAL_AVATAR}</div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div className={styles.cardName}>
               {teaser.displayTitle === "学姐" ? "某学姐" : "某学长"}（化名）

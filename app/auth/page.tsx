@@ -356,14 +356,6 @@ function AuthForm() {
           )}
         </div>
 
-        {/* Switch role */}
-        <div className={styles.switchRole}>
-          {isMentor ? (
-            <Link href={`/auth?role=parent&mode=${mode}&redirect=${redirectQuery}`}>我是家长 / 学生 →</Link>
-          ) : (
-            <Link href={`/auth?role=mentor&mode=${mode}&redirect=${redirectQuery}`}>我是学长 / 学姐 →</Link>
-          )}
-        </div>
       </div>
     </div>
   );

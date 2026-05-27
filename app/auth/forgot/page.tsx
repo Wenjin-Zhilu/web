@@ -214,13 +214,6 @@ function ForgotPasswordForm() {
           </form>
         )}
 
-        <div className={styles.switchRole}>
-          {isMentor ? (
-            <Link href="/auth/forgot?role=parent">我是家长 / 学生 →</Link>
-          ) : (
-            <Link href="/auth/forgot?role=mentor">我是学长 / 学姐 →</Link>
-          )}
-        </div>
       </div>
     </div>
   );
