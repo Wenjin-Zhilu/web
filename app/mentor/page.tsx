@@ -44,16 +44,16 @@ const BENEFITS = [
 ];
 
 const STEPS = [
-  { num: "01", title: "填一份简介", desc: "学校、专业、年级、最擅长聊的话题。两分钟。" },
-  { num: "02", title: "上传在读证明", desc: "学生证 / 教务系统截图，仅用于身份核验，不公开。" },
+  { num: "01", title: "填一份简介", desc: "学校、专业、年级/毕业年份、最擅长聊的话题。两分钟。" },
+  { num: "02", title: "上传身份学籍证明", desc: "学生证 / 毕业证 / 学位证 / 校园卡截图，仅用于身份核验，不公开。" },
   { num: "03", title: "等待审核", desc: "通常 24 小时内反馈。审核通过后，进入指路工作台。" },
   { num: "04", title: "开放档期", desc: "你设档期，家长根据匹配预约。完成咨询，结算到账。" },
 ];
 
 const REQS = [
   {
-    title: "在读身份",
-    desc: "本科、硕士、博士、Gap year 在读均可。",
+    title: "在读或已毕业",
+    desc: "本科、硕士、博士在读，或已毕业参加工作的学长学姐，都欢迎加入。",
   },
   {
     title: "首批覆盖院校",
@@ -61,7 +61,7 @@ const REQS = [
   },
   {
     title: "身份核验",
-    desc: "在读证明 + 简介审核都通过后才能开始接单。所有信息平台保密。",
+    desc: "身份学籍证明 + 简介审核都通过后才能开始接单。所有信息平台保密。",
   },
   {
     title: "基本沟通能力",
@@ -212,7 +212,7 @@ export default function MentorLanding() {
               <div className={styles.sectionEyebrow}>Who we look for</div>
               <h2 className={styles.sectionTitle}>我们在找这样的学长学姐</h2>
               <p className={styles.sectionSub}>
-                这一批名额有限，优先开放给以下院校的在读生。
+                这一批名额有限，优先开放给以下院校的在读生与毕业生。
               </p>
             </div>
             <div>

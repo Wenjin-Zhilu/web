@@ -45,7 +45,7 @@ const STEPS = [
   {
     num: "02",
     title: "查看匹配",
-    desc: "我们为您匹配 3–5 位在读同学，您可以查看他们的简介、擅长方向与历史评价，挑选最适合回答您问题的一位。",
+    desc: "我们为您匹配 3–5 位学长学姐，您可以查看他们的简介、擅长方向与历史评价，挑选最适合回答您问题的一位。",
   },
   {
     num: "03",
@@ -76,7 +76,7 @@ const GUARANTEES = [
   {
     icon: "真",
     title: "真实身份",
-    desc: "采取邮箱 + 学生证等多重验证，同学的学校、专业、年级等信息将在确认后展示。",
+    desc: "采取邮箱 + 学生证/毕业证等多重验证，学长学姐的学校、专业、年级等信息将在确认后展示。",
   },
   {
     icon: "配",
@@ -136,7 +136,7 @@ export default function Home() {
           <div className={styles.heroInner}>
             <div className={styles.eyebrow}>
               <span className={styles.eyebrowDot} />
-              <span>首批 200 位对口在读生 · 6 月 9 日 17:00 上线</span>
+              <span>首批 200 位对口学长学姐 · 6 月 9 日 17:00 上线</span>
             </div>
             <h1 className={styles.heroTitle}>
               升学路上疑问多？
@@ -200,7 +200,7 @@ export default function Home() {
               <div className={styles.sectionEyebrow}>Coverage</div>
               <h2 className={styles.sectionTitle}>覆盖学校广泛</h2>
               <p className={styles.sectionSub}>
-                覆盖热门院校与专业方向。每所院校配多位对口专业的在读学长学姐，覆盖从本科到博士。
+                覆盖热门院校与专业方向。每所院校配多位对口专业的学长学姐，覆盖从本科到博士、在读到已工作。
                 若您的目标院校 / 专业暂未列出，注册后可联系我们提交需求。
               </p>
             </div>

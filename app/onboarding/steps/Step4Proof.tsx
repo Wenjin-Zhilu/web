@@ -60,9 +60,9 @@ export function Step4Proof({
 
   return (
     <div>
-      <h1 className={styles.title}>学籍证明 + 确认提交</h1>
+      <h1 className={styles.title}>身份学籍证明 + 确认提交</h1>
       <p className={styles.subtitle}>
-        上传学生证 / 录取通知书 / 校园卡截图。仅 admin 审核可见，家长看不到。
+        上传学生证 / 毕业证 / 学位证 / 校园卡截图。仅 admin 审核可见，家长看不到。
       </p>
 
       <div className={styles.fieldGroup}>
@@ -94,7 +94,7 @@ export function Step4Proof({
           />
         </label>
         <span style={{ marginTop: 6, fontSize: 12, color: "#9a9a93" }}>
-          支持学生证 / 录取通知书 / 校园卡截图，JPG / PNG ≤ 2 MB
+          支持学生证 / 毕业证 / 学位证 / 校园卡截图，JPG / PNG ≤ 2 MB
         </span>
         {fileError && <span className={styles.errorText}>{fileError}</span>}
         {preview && (
@@ -152,6 +152,6 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 
 export function validateStep4(proof: Step4Data, fileSizeError: string | null): string | null {
   if (fileSizeError) return fileSizeError;
-  if (!proof.proofDataUrl && !proof.proofExistingUrl) return "请上传学籍证明图片";
+  if (!proof.proofDataUrl && !proof.proofExistingUrl) return "请上传身份学籍证明图片";
   return null;
 }

@@ -483,7 +483,7 @@ function ReviewStatusBanner({
         <div className={styles.cardBanner} style={{ background: accent }} />
         <h3 className={styles.cardTitle}>完成入驻资料</h3>
         <p className={styles.cardSub} style={{ marginBottom: 14 }}>
-          学校 / 院系 / 5 个问答 + 学籍证明，提交后由 admin 人工审核。
+          学校 / 院系 / 5 个问答 + 身份学籍证明，提交后由 admin 人工审核。
         </p>
         <Link
           href="/onboarding"

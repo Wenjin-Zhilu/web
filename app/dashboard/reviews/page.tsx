@@ -43,7 +43,7 @@ export default function ReviewsPage() {
     <div className={dashStyles.content}>
       <h1 className={dashStyles.pageTitle}>院校评价</h1>
       <p className={dashStyles.pageSub}>
-        来自真实在读学长学姐的一手评价 · {schools.length} 所院校 · {totalColleges} 个学院 · {totalMentors} 位参与
+        来自真实学长学姐的一手评价 · {schools.length} 所院校 · {totalColleges} 个学院 · {totalMentors} 位参与
       </p>
 
       <input

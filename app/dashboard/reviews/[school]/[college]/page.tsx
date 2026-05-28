@@ -177,7 +177,7 @@ export default function CollegePage({
         <div className={styles.mentorZone}>
           <h2 className={styles.mentorZoneTitle}>{college.name}的学长学姐</h2>
           <p className={styles.mentorZoneSub}>
-            以上评价来自经过身份验证的在读学长学姐。想深入了解，可以预约一次咨询。
+            以上评价来自经过身份验证的学长学姐。想深入了解，可以预约一次咨询。
           </p>
           <div className={styles.mentorGrid}>
             {college.mentors.map((m) => (

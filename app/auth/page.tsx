@@ -7,18 +7,6 @@ import { getAuthClient } from "@/lib/auth-client";
 import { Suspense } from "react";
 import styles from "./auth.module.css";
 
-const HK_UNI_DOMAINS = [
-  "hku.hk", "cuhk.edu.hk", "ust.hk", "polyu.edu.hk", "polyu.hk",
-  "cityu.edu.hk", "hkbu.edu.hk", "ln.edu.hk", "ln.hk", "eduhk.hk",
-];
-
-function isEduEmail(email: string): boolean {
-  const lower = email.toLowerCase();
-  const domain = lower.split("@")[1];
-  if (!domain) return false;
-  if (domain.includes(".edu")) return true;
-  return HK_UNI_DOMAINS.some((d) => domain === d || domain.endsWith("." + d));
-}
 
 function getSafeLocalRedirect(value: string | null) {
   if (!value || !value.startsWith("/") || value.startsWith("//")) {
@@ -49,12 +37,6 @@ function AuthForm() {
   const accentColor = isMentor ? "#3d5c4d" : "#b8472d";
 
   const validateEmail = () => {
-    if (isMentor && mode === "register") {
-      if (!isEduEmail(email)) {
-        setError("指路人注册需使用高校邮箱（含 .edu 的域名）或受支持的香港高校邮箱");
-        return false;
-      }
-    }
     if (!email.includes("@")) {
       setError("请输入有效的邮箱地址");
       return false;
@@ -201,7 +183,7 @@ function AuthForm() {
         </h1>
         <p className={styles.subtitle}>
           {isMentor
-            ? "用你的大学邮箱注册,成为指路人"
+            ? "注册成为指路人（推荐使用高校邮箱）"
             : "开始问津,找到你需要的学长学姐"}
         </p>
 
@@ -276,8 +258,8 @@ function AuthForm() {
                 type="email"
                 className={styles.input}
                 placeholder={
-                  isMentor && mode === "register"
-                    ? "xxx@xxx.edu.cn"
+                  isMentor
+                    ? "推荐使用 .edu 邮箱"
                     : "your@email.com"
                 }
                 value={email}

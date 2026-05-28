@@ -4,7 +4,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "问津 ｜ 指路",
   description:
-    "问津,帮家长找到真的在读那个专业的学长学姐。指路,让淋过雨的人为别人撑伞。",
+    "问津,帮家长找到真正读过那个专业的学长学姐。指路,让淋过雨的人为别人撑伞。",
 };
 
 export default function RootLayout({

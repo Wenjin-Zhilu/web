@@ -122,7 +122,7 @@ export default function ReviewsPreviewPage() {
       <div className={styles.page}>
         <h1 className={styles.pageTitle}>院校评价 🔥</h1>
         <p className={styles.pageSub}>
-          来自真实在读学长学姐的一手评价 · {schoolsWithData} 所院校 · {totalColleges} 个学院 · {totalMentors * 2} 位参与
+          来自真实学长学姐的一手评价 · {schoolsWithData} 所院校 · {totalColleges} 个学院 · {totalMentors * 2} 位参与
         </p>
 
         {loading ? (
@@ -190,7 +190,7 @@ export default function ReviewsPreviewPage() {
                       <div className={styles.emptyIcon}>🌱</div>
                       <div className={styles.emptyTitle}>这所学校还没有学长学姐入驻</div>
                       <div className={styles.emptySub}>
-                        你是{current.name}的在读学长学姐？写一条评价，让更多学弟学妹听到你的视角，同时接单一对一咨询，<b className={styles.emptyHighlight}>赚取高额收益</b>。
+                        你是{current.name}的学长学姐？写一条评价，让更多学弟学妹听到你的视角，同时接单一对一咨询，<b className={styles.emptyHighlight}>赚取高额收益</b>。
                       </div>
                       <Link href="/mentor" className={styles.btnPrimary}>我是学长学姐，加入指路</Link>
                     </div>

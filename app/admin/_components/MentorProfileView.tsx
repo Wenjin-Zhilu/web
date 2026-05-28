@@ -148,7 +148,7 @@ export function MentorProfileView({ mentor }: { mentor: MentorFullProfile }) {
         )}
       </Section>
 
-      <Section title="学籍证明">
+      <Section title="身份学籍证明">
         {mentor.proofImageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img

@@ -2,7 +2,7 @@
 "use client";
 import styles from "../onboarding.module.css";
 
-const STEP_LABELS = ["基本信息", "学院介绍", "差异化经历", "学籍证明"] as const;
+const STEP_LABELS = ["基本信息", "学院介绍", "差异化经历", "身份学籍证明"] as const;
 
 export function ProgressBar({ current }: { current: number }) {
   return (
