@@ -97,6 +97,44 @@ function formatDay(key: string): string {
   return `${d.getMonth() + 1}/${d.getDate()} ${weekdays[d.getDay()]}`;
 }
 
+// ── 时间问询的日期 / 时间格 ──
+const INQUIRY_DAYS_AHEAD = 14;
+const WEEKDAY_CHARS = ["日", "一", "二", "三", "四", "五", "六"];
+
+function dayKeyOf(d: Date): string {
+  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+}
+
+function buildInquiryDays(): Date[] {
+  const out: Date[] = [];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  for (let i = 0; i < INQUIRY_DAYS_AHEAD; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() + i);
+    out.push(d);
+  }
+  return out;
+}
+
+// 当天 08:00 – 22:30，每 30 分钟一格
+function buildDayTimeCells(day: Date): Date[] {
+  const out: Date[] = [];
+  for (let h = 8; h < 23; h++) {
+    for (let m = 0; m < 60; m += 30) {
+      const d = new Date(day);
+      d.setHours(h, m, 0, 0);
+      out.push(d);
+    }
+  }
+  return out;
+}
+
+function formatInquiryChip(iso: string): string {
+  const d = new Date(iso);
+  return `${d.getMonth() + 1}/${d.getDate()} 周${WEEKDAY_CHARS[d.getDay()]} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
 export default function MentorDetailPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
@@ -110,7 +148,12 @@ export default function MentorDetailPage() {
   const [topic, setTopic] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const [inquiryTimes, setInquiryTimes] = useState<string[]>([""]);
+  const [inquiryDay, setInquiryDay] = useState<Date>(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  });
+  const [inquirySelected, setInquirySelected] = useState<Set<string>>(new Set());
   const [inquiryTopic, setInquiryTopic] = useState("");
   const [inquirySubmitting, setInquirySubmitting] = useState(false);
 
@@ -153,26 +196,27 @@ export default function MentorDetailPage() {
     }
   };
 
+  const toggleInquiryCell = (cell: Date) => {
+    const iso = cell.toISOString();
+    const next = new Set(inquirySelected);
+    if (next.has(iso)) {
+      next.delete(iso);
+    } else {
+      if (next.size >= 5) {
+        alert("最多选择 5 个候选时段");
+        return;
+      }
+      next.add(iso);
+    }
+    setInquirySelected(next);
+  };
+
   const submitInquiry = async () => {
-    const times = inquiryTimes.map((t) => t.trim()).filter(Boolean);
-    if (times.length === 0) {
-      alert("请至少添加一个候选时间");
+    if (inquirySelected.size === 0) {
+      alert("请至少选择一个候选时段");
       return;
     }
-    const now = Date.now();
-    const options: string[] = [];
-    for (const t of times) {
-      const d = new Date(t);
-      if (Number.isNaN(d.getTime())) {
-        alert("有候选时间格式不正确");
-        return;
-      }
-      if (d.getTime() <= now) {
-        alert("候选时间必须是将来的时间");
-        return;
-      }
-      options.push(d.toISOString());
-    }
+    const options = Array.from(inquirySelected);
     setInquirySubmitting(true);
     try {
       await apiSend("/api/inquiries", "POST", {
@@ -419,52 +463,129 @@ export default function MentorDetailPage() {
           </div>
           <div className={styles.card}>
             <p className={styles.cardSub} style={{ marginBottom: 12 }}>
-              提出你希望的 1-5 个候选时间发给学长。学长确认其中一个后会生成订单，你再支付即可。
+              点选你方便的时段（最多 5 个）发给学长。学长确认其中一个后会生成订单，你再支付即可。
             </p>
-            {inquiryTimes.map((t, i) => (
-              <div
-                key={i}
-                style={{ display: "flex", gap: 8, marginBottom: 8, alignItems: "center" }}
-              >
-                <input
-                  type="datetime-local"
-                  value={t}
-                  onChange={(e) => {
-                    const next = [...inquiryTimes];
-                    next[i] = e.target.value;
-                    setInquiryTimes(next);
-                  }}
-                  style={{
-                    flex: 1,
-                    padding: 10,
-                    border: "1px solid #d8d8d2",
-                    borderRadius: 8,
-                    fontSize: 14,
-                    fontFamily: "inherit",
-                  }}
-                />
-                {inquiryTimes.length > 1 && (
+
+            {/* 日期横条 */}
+            <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 6, marginBottom: 12 }}>
+              {buildInquiryDays().map((d) => {
+                const sel = dayKeyOf(d) === dayKeyOf(inquiryDay);
+                const isToday = dayKeyOf(d) === dayKeyOf(new Date());
+                return (
                   <button
+                    key={d.toISOString()}
                     type="button"
-                    onClick={() => setInquiryTimes(inquiryTimes.filter((_, j) => j !== i))}
-                    className={`${styles.btn} ${styles.btnGhost}`}
-                    style={{ padding: "8px 12px" }}
+                    onClick={() => setInquiryDay(d)}
+                    style={{
+                      flex: "0 0 auto",
+                      padding: "8px 10px",
+                      border: "1px solid " + (sel ? ACCENT : "#ececec"),
+                      borderRadius: 7,
+                      background: sel ? ACCENT : "#fff",
+                      color: sel ? "#fff" : "#1f1f1f",
+                      cursor: "pointer",
+                      fontFamily: "inherit",
+                      fontSize: 12,
+                      minWidth: 54,
+                      textAlign: "center",
+                    }}
                   >
-                    删除
+                    <div style={{ fontSize: 10, opacity: 0.8 }}>
+                      {WEEKDAY_CHARS[d.getDay()]}
+                      {isToday && " · 今"}
+                    </div>
+                    <div style={{ fontSize: 13, fontWeight: 600, marginTop: 1, fontFamily: "var(--serif)" }}>
+                      {d.getMonth() + 1}/{d.getDate()}
+                    </div>
                   </button>
-                )}
+                );
+              })}
+            </div>
+
+            {/* 时间格 */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(70px, 1fr))",
+                gap: 8,
+                marginBottom: 14,
+              }}
+            >
+              {buildDayTimeCells(inquiryDay).map((cell) => {
+                const iso = cell.toISOString();
+                const past = cell.getTime() <= Date.now();
+                const picked = inquirySelected.has(iso);
+                return (
+                  <button
+                    key={iso}
+                    type="button"
+                    disabled={past}
+                    onClick={() => toggleInquiryCell(cell)}
+                    style={{
+                      padding: "9px 0",
+                      borderRadius: 6,
+                      fontSize: 14,
+                      fontFamily: "inherit",
+                      cursor: past ? "not-allowed" : "pointer",
+                      background: picked ? ACCENT : past ? "#f5f4ee" : "#fff",
+                      color: picked ? "#fff" : past ? "#c0bfb6" : "#1f1f1f",
+                      border: "1px solid " + (picked ? ACCENT : "#ececec"),
+                      fontWeight: picked ? 600 : 400,
+                    }}
+                  >
+                    {formatTime(iso)}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* 已选候选时段 */}
+            {inquirySelected.size > 0 && (
+              <div style={{ marginBottom: 14 }}>
+                <p className={styles.cardSub} style={{ marginBottom: 6 }}>
+                  已选 {inquirySelected.size} / 5 个候选时段
+                </p>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {Array.from(inquirySelected)
+                    .sort()
+                    .map((iso) => (
+                      <span
+                        key={iso}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 6,
+                          padding: "5px 10px",
+                          background: "#fbeee9",
+                          border: "1px solid #f0cfc2",
+                          borderRadius: 16,
+                          fontSize: 13,
+                          color: "#a4391a",
+                        }}
+                      >
+                        {formatInquiryChip(iso)}
+                        <button
+                          type="button"
+                          onClick={() => toggleInquiryCell(new Date(iso))}
+                          style={{
+                            background: "none",
+                            border: "none",
+                            color: "#a4391a",
+                            cursor: "pointer",
+                            fontSize: 15,
+                            lineHeight: 1,
+                            padding: 0,
+                          }}
+                          aria-label="移除"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                </div>
               </div>
-            ))}
-            {inquiryTimes.length < 5 && (
-              <button
-                type="button"
-                onClick={() => setInquiryTimes([...inquiryTimes, ""])}
-                className={`${styles.btn} ${styles.btnGhost}`}
-                style={{ marginBottom: 14 }}
-              >
-                + 添加候选时间
-              </button>
             )}
+
             <textarea
               value={inquiryTopic}
               onChange={(e) => setInquiryTopic(e.target.value)}
@@ -489,7 +610,7 @@ export default function MentorDetailPage() {
             <button
               type="button"
               onClick={submitInquiry}
-              disabled={inquirySubmitting}
+              disabled={inquirySubmitting || inquirySelected.size === 0}
               className={`${styles.btn} ${styles.btnPrimary}`}
               style={{ background: ACCENT }}
             >
