@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { parentAuthClient, mentorAuthClient } from "@/lib/auth-client";
 import { Sidebar } from "./_components/Sidebar";
+import UpcomingCallModal from "./_components/UpcomingCallModal";
 import styles from "./dashboard.module.css";
 import WeChatFloat from "../components/WeChatFloat";
 
@@ -40,6 +41,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {children}
       </div>
       <WeChatFloat accent={accent} />
+      <UpcomingCallModal />
     </div>
   );
 }

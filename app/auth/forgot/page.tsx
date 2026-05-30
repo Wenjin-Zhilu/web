@@ -14,8 +14,12 @@ function ForgotPasswordForm() {
   const accentColor = isMentor ? "#3d5c4d" : "#b8472d";
   const authClient = getAuthClient(role);
 
-  const [step, setStep] = useState<"email" | "reset">("email");
+  // 学长只支持邮箱找回;家长(手机注册)默认走短信找回,也可切换到邮箱
+  const initialMethod = !isMentor && searchParams.get("method") !== "email" ? "phone" : "email";
+  const [method, setMethod] = useState<"phone" | "email">(initialMethod);
+  const [step, setStep] = useState<"input" | "reset">("input");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -29,25 +33,59 @@ function ForgotPasswordForm() {
     return () => clearTimeout(t);
   }, [countdown]);
 
-  const sendOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const switchMethod = (m: "phone" | "email") => {
+    setMethod(m);
+    setStep("input");
     setError("");
     setInfo("");
-    if (!email.includes("@")) {
-      setError("请输入有效的邮箱地址");
-      return;
-    }
-    setLoading(true);
-    try {
+    setOtp("");
+    setPassword("");
+  };
+
+  // 发送验证码(邮箱 OTP 或手机短信),返回是否成功
+  const requestCode = async (): Promise<boolean> => {
+    if (method === "email") {
+      if (!email.includes("@")) {
+        setError("请输入有效的邮箱地址");
+        return false;
+      }
       const { error: sendErr } = await authClient.emailOtp.sendVerificationOtp({
         email,
         type: "forget-password",
       });
       if (sendErr) {
         setError(sendErr.message || "发送失败,请重试");
-      } else {
+        return false;
+      }
+      return true;
+    } else {
+      if (!/^1\d{10}$/.test(phone)) {
+        setError("请输入有效的 11 位手机号");
+        return false;
+      }
+      const res = await fetch("/api/auth/phone/send-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "发送失败,请重试");
+        return false;
+      }
+      return true;
+    }
+  };
+
+  const sendOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setInfo("");
+    setLoading(true);
+    try {
+      if (await requestCode()) {
         setStep("reset");
-        setInfo("验证码已发送,请查收邮件。");
+        setInfo(method === "email" ? "验证码已发送,请查收邮件。" : "验证码已发送至手机,请查收短信。");
         setCountdown(60);
       }
     } catch {
@@ -62,16 +100,12 @@ function ForgotPasswordForm() {
     setError("");
     setLoading(true);
     try {
-      const { error: sendErr } = await authClient.emailOtp.sendVerificationOtp({
-        email,
-        type: "forget-password",
-      });
-      if (sendErr) {
-        setError(sendErr.message || "发送失败,请重试");
-      } else {
+      if (await requestCode()) {
         setInfo("验证码已重新发送。");
         setCountdown(60);
       }
+    } catch {
+      setError("网络错误,请重试");
     } finally {
       setLoading(false);
     }
@@ -84,31 +118,46 @@ function ForgotPasswordForm() {
       setError("请输入完整的 6 位验证码");
       return;
     }
-    if (password.length < 8) {
-      setError("新密码至少 8 个字符");
+    if (password.length < 1) {
+      setError("请输入新密码");
       return;
     }
     setLoading(true);
     try {
-      const { error: resetErr } = await authClient.emailOtp.resetPassword({
-        email,
-        otp,
-        password,
-      });
-      if (resetErr) {
-        setError(resetErr.message || "重置失败,请检查验证码是否正确");
+      if (method === "email") {
+        const { error: resetErr } = await authClient.emailOtp.resetPassword({
+          email,
+          otp,
+          password,
+        });
+        if (resetErr) {
+          setError(resetErr.message || "重置失败,请检查验证码是否正确");
+          return;
+        }
       } else {
-        setInfo("密码已重置,正在跳转登录...");
-        setTimeout(() => {
-          router.replace(`/auth?role=${role}&mode=login`);
-        }, 1200);
+        const res = await fetch("/api/auth/phone/reset-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone, code: otp, password }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setError(data.error || "重置失败,请检查验证码是否正确");
+          return;
+        }
       }
+      setInfo("密码已重置,正在跳转登录...");
+      setTimeout(() => {
+        router.replace(`/auth?role=${role}&mode=login`);
+      }, 1200);
     } catch {
       setError("网络错误,请重试");
     } finally {
       setLoading(false);
     }
   };
+
+  const sentTarget = method === "email" ? email : phone;
 
   return (
     <div className={styles.page}>
@@ -125,23 +174,57 @@ function ForgotPasswordForm() {
           忘记密码
         </h1>
         <p className={styles.subtitle}>
-          {step === "email"
-            ? "输入注册邮箱,我们会发送一个验证码用于重置密码。"
-            : `验证码已发送到 ${email}。请输入验证码并设置新密码。`}
+          {step === "input"
+            ? method === "email"
+              ? "输入注册邮箱,我们会发送一个验证码用于重置密码。"
+              : "输入注册手机号,我们会发送一个短信验证码用于重置密码。"
+            : `验证码已发送到 ${sentTarget}。请输入验证码并设置新密码。`}
         </p>
 
-        {step === "email" ? (
+        {!isMentor && step === "input" && (
+          <div className={styles.methodToggle}>
+            <button
+              type="button"
+              className={`${styles.methodBtn} ${method === "phone" ? styles.methodActive : ""}`}
+              style={method === "phone" ? { color: accentColor } : undefined}
+              onClick={() => switchMethod("phone")}
+            >
+              手机号
+            </button>
+            <button
+              type="button"
+              className={`${styles.methodBtn} ${method === "email" ? styles.methodActive : ""}`}
+              style={method === "email" ? { color: accentColor } : undefined}
+              onClick={() => switchMethod("email")}
+            >
+              邮箱
+            </button>
+          </div>
+        )}
+
+        {step === "input" ? (
           <form onSubmit={sendOtp} className={styles.form}>
             <div className={styles.field}>
-              <label className={styles.label}>邮箱</label>
-              <input
-                type="email"
-                className={styles.input}
-                placeholder="your@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
+              <label className={styles.label}>{method === "email" ? "邮箱" : "手机号"}</label>
+              {method === "email" ? (
+                <input
+                  type="email"
+                  className={styles.input}
+                  placeholder="your@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              ) : (
+                <input
+                  type="tel"
+                  className={styles.input}
+                  placeholder="请输入 11 位手机号"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 11))}
+                  required
+                />
+              )}
             </div>
 
             {error && <p className={styles.error}>{error}</p>}
@@ -177,11 +260,11 @@ function ForgotPasswordForm() {
               <input
                 type="password"
                 className={styles.input}
-                placeholder="至少 8 个字符"
+                placeholder="设置一个新密码"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                minLength={8}
+                minLength={1}
               />
             </div>
 

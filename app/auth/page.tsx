@@ -51,8 +51,8 @@ function AuthForm() {
       setError("请输入有效的 11 位手机号");
       return;
     }
-    if (password.length < 8) {
-      setError("密码至少 8 个字符");
+    if (password.length < 1) {
+      setError("请输入密码");
       return;
     }
     setLoading(true);
@@ -99,8 +99,8 @@ function AuthForm() {
     setError("");
 
     if (!validateEmail()) return;
-    if (password.length < 8) {
-      setError("密码至少 8 个字符");
+    if (password.length < 1) {
+      setError("请输入密码");
       return;
     }
 
@@ -223,15 +223,27 @@ function AuthForm() {
             <div className={styles.field}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
                 <label className={styles.label}>密码</label>
+                {mode === "login" && (
+                  <Link
+                    href={`/auth/forgot?role=${role}&method=phone`}
+                    style={{
+                      fontSize: 12,
+                      color: accentColor,
+                      textDecoration: "none",
+                    }}
+                  >
+                    忘记密码?
+                  </Link>
+                )}
               </div>
               <input
                 type="password"
                 className={styles.input}
-                placeholder="至少 8 个字符"
+                placeholder="设置一个密码"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                minLength={8}
+                minLength={1}
               />
             </div>
 
@@ -287,11 +299,11 @@ function AuthForm() {
               <input
                 type="password"
                 className={styles.input}
-                placeholder="至少 8 个字符"
+                placeholder="设置一个密码"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                minLength={8}
+                minLength={1}
               />
             </div>
 

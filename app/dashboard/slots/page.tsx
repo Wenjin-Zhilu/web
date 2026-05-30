@@ -156,6 +156,70 @@ export default function SlotsPage() {
 
   const hasChanges = toAdd.size > 0 || toRemove.size > 0;
 
+  // 某天「已开放(open/booked) + 本次新增」的时:分集合，作为重复模板
+  const timesOfDay = (day: Date): { h: number; m: number }[] => {
+    const key = dayKey(day);
+    const set = new Map<string, { h: number; m: number }>();
+    for (const s of slots) {
+      if (s.status === "cancelled") continue;
+      const d = new Date(s.startAt);
+      if (dayKey(d) === key) set.set(`${d.getHours()}:${d.getMinutes()}`, { h: d.getHours(), m: d.getMinutes() });
+    }
+    for (const iso of toAdd) {
+      const d = new Date(iso);
+      if (dayKey(d) === key) set.set(`${d.getHours()}:${d.getMinutes()}`, { h: d.getHours(), m: d.getMinutes() });
+    }
+    return Array.from(set.values());
+  };
+
+  // 只把「未过期 + 尚未开放 + 不在新增集合」的格子加入新增
+  const addIfEmpty = (d: Date, set: Set<string>) => {
+    const iso = d.toISOString();
+    if (d.getTime() <= Date.now()) return;
+    if (existingByIso.has(iso)) return;
+    set.add(iso);
+  };
+
+  // 批量填档：每天重复 / 每周重复(同星期几) / 复制前一天。均限 14 天窗口内
+  const applyRepeat = (mode: "daily" | "weekly" | "prevDay") => {
+    setMsg(null);
+    const next = new Set(toAdd);
+    if (mode === "prevDay") {
+      const prev = new Date(selectedDay);
+      prev.setDate(prev.getDate() - 1);
+      const times = timesOfDay(prev);
+      if (times.length === 0) {
+        setMsg({ kind: "err", text: "前一天没有已开放或已选的时段可复制。" });
+        return;
+      }
+      for (const { h, m } of times) {
+        const d = new Date(selectedDay);
+        d.setHours(h, m, 0, 0);
+        addIfEmpty(d, next);
+      }
+    } else {
+      const times = timesOfDay(selectedDay);
+      if (times.length === 0) {
+        setMsg({ kind: "err", text: "请先在当前这天选好要开放的时段，再复制。" });
+        return;
+      }
+      for (const day of days) {
+        if (dayKey(day) === dayKey(selectedDay)) continue;
+        if (mode === "weekly" && day.getDay() !== selectedDay.getDay()) continue;
+        for (const { h, m } of times) {
+          const d = new Date(day);
+          d.setHours(h, m, 0, 0);
+          addIfEmpty(d, next);
+        }
+      }
+    }
+    const added = next.size - toAdd.size;
+    setToAdd(next);
+    if (added === 0) {
+      setMsg({ kind: "ok", text: "目标日期的这些时段都已开放或已选，无需重复。" });
+    }
+  };
+
   const save = async () => {
     setSaving(true);
     setMsg(null);
@@ -165,18 +229,30 @@ export default function SlotsPage() {
       }
       if (toAdd.size > 0) {
         const payload = Array.from(toAdd).map((iso) => ({ startAt: iso, durationMins: 30 }));
-        const r = await apiSend<{ created: Slot[]; conflicts: Array<{ startAt: string; reason: string }> }>(
-          "/api/mentors/me/slots",
-          "POST",
-          { slots: payload }
-        );
-        if (r.conflicts.length > 0) {
+        // 后端单次最多 100 条，超出则前端分批提交
+        let createdCount = 0;
+        const conflicts: Array<{ startAt: string; reason: string }> = [];
+        for (let i = 0; i < payload.length; i += 100) {
+          const chunk = payload.slice(i, i + 100);
+          const r = await apiSend<{ created: Slot[]; conflicts: Array<{ startAt: string; reason: string }> }>(
+            "/api/mentors/me/slots",
+            "POST",
+            { slots: chunk }
+          );
+          createdCount += r.created.length;
+          conflicts.push(...r.conflicts);
+        }
+        if (conflicts.length > 0) {
+          const shown = conflicts
+            .slice(0, 6)
+            .map((c) => `${formatDateTime(c.startAt)}（${c.reason}）`)
+            .join("； ");
           setMsg({
             kind: "err",
-            text: `部分时段未保存：${r.conflicts.map((c) => `${formatDateTime(c.startAt)}（${c.reason}）`).join("； ")}`,
+            text: `已新增 ${createdCount}，部分时段未保存：${shown}${conflicts.length > 6 ? " 等" : ""}`,
           });
         } else {
-          setMsg({ kind: "ok", text: `已保存：新增 ${r.created.length}，删除 ${toRemove.size}` });
+          setMsg({ kind: "ok", text: `已保存：新增 ${createdCount}，删除 ${toRemove.size}` });
         }
       } else {
         setMsg({ kind: "ok", text: `已删除 ${toRemove.size} 个时段` });
@@ -336,6 +412,20 @@ export default function SlotsPage() {
               </button>
             );
           })}
+        </div>
+
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", margin: "0 0 14px" }}>
+          <span style={{ fontSize: 12, color: "#6e6e68" }}>把本天已选时段：</span>
+          <button type="button" onClick={() => applyRepeat("daily")} className={`${styles.btn} ${styles.btnGhost}`} style={{ fontSize: 13, padding: "6px 12px" }}>
+            复制到每天
+          </button>
+          <button type="button" onClick={() => applyRepeat("weekly")} className={`${styles.btn} ${styles.btnGhost}`} style={{ fontSize: 13, padding: "6px 12px" }}>
+            复制到每周（同星期几）
+          </button>
+          <button type="button" onClick={() => applyRepeat("prevDay")} className={`${styles.btn} ${styles.btnGhost}`} style={{ fontSize: 13, padding: "6px 12px" }}>
+            复制前一天
+          </button>
+          <span style={{ fontSize: 11, color: "#9a9a93" }}>仅在未来 14 天内生效</span>
         </div>
 
         {loading ? (

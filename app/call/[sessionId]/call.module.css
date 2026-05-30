@@ -39,8 +39,16 @@
 .timerValue {
   font-weight: 700;
   font-size: 18px;
-  color: #ef4444;
+  color: #e8e4d8;
   margin-left: 6px;
+}
+.timerWarning .timerValue {
+  color: #ef4444;
+}
+.extendNote {
+  font-size: 12px;
+  color: #8a857a;
+  margin-left: 8px;
 }
 
 .avatar {
@@ -68,6 +76,22 @@
   font-size: 14px;
   color: #8a857a;
   margin: 0 0 12px;
+}
+.peerCard {
+  margin: 0 0 14px;
+  padding: 10px 18px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-left-width: 3px;
+  text-align: center;
+  max-width: 340px;
+}
+.peerLine {
+  font-size: 13px;
+  color: #cfcabd;
+  margin: 2px 0;
+  line-height: 1.55;
 }
 .statusDot {
   display: inline-block;
@@ -135,6 +159,18 @@
 }
 .hangupBtn:hover {
   background: #dc2626;
+}
+.extendBtn {
+  background: #3d5c4d;
+  font-size: 15px;
+  font-weight: 600;
+}
+.extendBtn:hover {
+  background: #4a6b5b;
+}
+.extendBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .cancelBtn {

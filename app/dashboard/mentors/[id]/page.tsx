@@ -110,6 +110,10 @@ export default function MentorDetailPage() {
   const [topic, setTopic] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  const [inquiryTimes, setInquiryTimes] = useState<string[]>([""]);
+  const [inquiryTopic, setInquiryTopic] = useState("");
+  const [inquirySubmitting, setInquirySubmitting] = useState(false);
+
   useEffect(() => {
     let cancel = false;
     (async () => {
@@ -146,6 +150,41 @@ export default function MentorDetailPage() {
     } catch (e) {
       alert((e as Error).message || "下单失败");
       setSubmitting(false);
+    }
+  };
+
+  const submitInquiry = async () => {
+    const times = inquiryTimes.map((t) => t.trim()).filter(Boolean);
+    if (times.length === 0) {
+      alert("请至少添加一个候选时间");
+      return;
+    }
+    const now = Date.now();
+    const options: string[] = [];
+    for (const t of times) {
+      const d = new Date(t);
+      if (Number.isNaN(d.getTime())) {
+        alert("有候选时间格式不正确");
+        return;
+      }
+      if (d.getTime() <= now) {
+        alert("候选时间必须是将来的时间");
+        return;
+      }
+      options.push(d.toISOString());
+    }
+    setInquirySubmitting(true);
+    try {
+      await apiSend("/api/inquiries", "POST", {
+        mentorId: id,
+        options,
+        topic: inquiryTopic.trim(),
+      });
+      alert("已发起时间问询，学长确认后你会在「时间问询」里看到结果。");
+      router.push("/dashboard/inquiries");
+    } catch (e) {
+      alert((e as Error).message || "发起失败");
+      setInquirySubmitting(false);
     }
   };
 
@@ -272,19 +311,11 @@ export default function MentorDetailPage() {
           <div className={styles.sectionHead}>
             <h2 className={styles.sectionTitle}>可预约时段</h2>
           </div>
-          <div
-            style={{
-              background: "#fff7ed",
-              border: "1px solid #fed7aa",
-              color: "#9a3412",
-              padding: "10px 14px",
-              borderRadius: 8,
-              fontSize: 14,
-              marginBottom: 12,
-            }}
-          >
-            目前内测期请联系右下角客服预约档期。
-          </div>
+          {openSlots.length === 0 && (
+            <div className={styles.emptyState}>
+              该学长暂未开放固定档期。你可以在下方发起「时间问询」，提出你希望的时间，等待学长确认。
+            </div>
+          )}
           {openSlots.length > 0 && (
             <div className={styles.card}>
               {dayKeys.map((dk) => (
@@ -380,6 +411,92 @@ export default function MentorDetailPage() {
             </div>
           </div>
         )}
+
+        {/* 时间问询：约学长没开放的时段 */}
+        <div className={styles.section}>
+          <div className={styles.sectionHead}>
+            <h2 className={styles.sectionTitle}>想约的时间这里没有？</h2>
+          </div>
+          <div className={styles.card}>
+            <p className={styles.cardSub} style={{ marginBottom: 12 }}>
+              提出你希望的 1-5 个候选时间发给学长。学长确认其中一个后会生成订单，你再支付即可。
+            </p>
+            {inquiryTimes.map((t, i) => (
+              <div
+                key={i}
+                style={{ display: "flex", gap: 8, marginBottom: 8, alignItems: "center" }}
+              >
+                <input
+                  type="datetime-local"
+                  value={t}
+                  onChange={(e) => {
+                    const next = [...inquiryTimes];
+                    next[i] = e.target.value;
+                    setInquiryTimes(next);
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: 10,
+                    border: "1px solid #d8d8d2",
+                    borderRadius: 8,
+                    fontSize: 14,
+                    fontFamily: "inherit",
+                  }}
+                />
+                {inquiryTimes.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => setInquiryTimes(inquiryTimes.filter((_, j) => j !== i))}
+                    className={`${styles.btn} ${styles.btnGhost}`}
+                    style={{ padding: "8px 12px" }}
+                  >
+                    删除
+                  </button>
+                )}
+              </div>
+            ))}
+            {inquiryTimes.length < 5 && (
+              <button
+                type="button"
+                onClick={() => setInquiryTimes([...inquiryTimes, ""])}
+                className={`${styles.btn} ${styles.btnGhost}`}
+                style={{ marginBottom: 14 }}
+              >
+                + 添加候选时间
+              </button>
+            )}
+            <textarea
+              value={inquiryTopic}
+              onChange={(e) => setInquiryTopic(e.target.value)}
+              placeholder="想聊点什么？(给学长一个准备方向，选填)"
+              rows={3}
+              maxLength={500}
+              style={{
+                width: "100%",
+                padding: 12,
+                border: "1px solid #d8d8d2",
+                borderRadius: 8,
+                fontFamily: "inherit",
+                fontSize: 14,
+                lineHeight: 1.7,
+                resize: "vertical",
+                outline: "none",
+                boxSizing: "border-box",
+                marginBottom: 14,
+                marginTop: 6,
+              }}
+            />
+            <button
+              type="button"
+              onClick={submitInquiry}
+              disabled={inquirySubmitting}
+              className={`${styles.btn} ${styles.btnPrimary}`}
+              style={{ background: ACCENT }}
+            >
+              {inquirySubmitting ? "发起中…" : "发起时间问询"}
+            </button>
+          </div>
+        </div>
       </div>
     </>
   );
