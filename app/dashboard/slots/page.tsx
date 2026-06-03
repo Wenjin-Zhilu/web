@@ -172,36 +172,34 @@ export default function SlotsPage() {
     return Array.from(set.values());
   };
 
-  // 只把「未过期 + 尚未开放 + 不在新增集合」的格子加入新增
-  const addIfEmpty = (d: Date, set: Set<string>) => {
-    const iso = d.toISOString();
-    if (d.getTime() <= Date.now()) return;
-    if (existingByIso.has(iso)) return;
-    set.add(iso);
-  };
-
-  // 批量填档：每天重复 / 每周重复(同星期几) / 复制前一天。均限 14 天窗口内
-  const applyRepeat = (mode: "daily" | "weekly" | "prevDay") => {
-    setMsg(null);
-    const next = new Set(toAdd);
+  // 收集某次复制涉及的「可新增」目标格子：未过期、且不是已存在 slot。
+  // 已保存的 open/booked slot 不在此列（不会被复制/撤销误伤，符合「开档即承诺」）。
+  const collectRepeatCandidates = (mode: "daily" | "weekly" | "prevDay"): string[] | null => {
+    const candidates: string[] = [];
+    const pushCell = (d: Date) => {
+      const iso = d.toISOString();
+      if (d.getTime() <= Date.now()) return;
+      if (existingByIso.has(iso)) return;
+      candidates.push(iso);
+    };
     if (mode === "prevDay") {
       const prev = new Date(selectedDay);
       prev.setDate(prev.getDate() - 1);
       const times = timesOfDay(prev);
       if (times.length === 0) {
         setMsg({ kind: "err", text: "前一天没有已开放或已选的时段可复制。" });
-        return;
+        return null;
       }
       for (const { h, m } of times) {
         const d = new Date(selectedDay);
         d.setHours(h, m, 0, 0);
-        addIfEmpty(d, next);
+        pushCell(d);
       }
     } else {
       const times = timesOfDay(selectedDay);
       if (times.length === 0) {
         setMsg({ kind: "err", text: "请先在当前这天选好要开放的时段，再复制。" });
-        return;
+        return null;
       }
       for (const day of days) {
         if (dayKey(day) === dayKey(selectedDay)) continue;
@@ -209,14 +207,33 @@ export default function SlotsPage() {
         for (const { h, m } of times) {
           const d = new Date(day);
           d.setHours(h, m, 0, 0);
-          addIfEmpty(d, next);
+          pushCell(d);
         }
       }
     }
-    const added = next.size - toAdd.size;
-    setToAdd(next);
-    if (added === 0) {
-      setMsg({ kind: "ok", text: "目标日期的这些时段都已开放或已选，无需重复。" });
+    return candidates;
+  };
+
+  // 批量填档（可撤销）：每天重复 / 每周重复(同星期几) / 复制前一天。均限 14 天窗口内。
+  // 再次点击同一个按钮：若目标格子都已是「本次新增」，则撤销这批新增。
+  const applyRepeat = (mode: "daily" | "weekly" | "prevDay") => {
+    setMsg(null);
+    const candidates = collectRepeatCandidates(mode);
+    if (candidates === null) return; // 模板为空，已给出错误提示
+    if (candidates.length === 0) {
+      setMsg({ kind: "ok", text: "目标日期的这些时段都已开放，或没有可操作的未来时段。" });
+      return;
+    }
+    const next = new Set(toAdd);
+    const allPending = candidates.every((iso) => toAdd.has(iso));
+    if (allPending) {
+      // 再次点击 = 撤销本次复制
+      for (const iso of candidates) next.delete(iso);
+      setToAdd(next);
+      setMsg({ kind: "ok", text: `已撤销复制：移除 ${candidates.length} 个待新增时段。` });
+    } else {
+      for (const iso of candidates) next.add(iso);
+      setToAdd(next);
     }
   };
 
@@ -425,7 +442,7 @@ export default function SlotsPage() {
           <button type="button" onClick={() => applyRepeat("prevDay")} className={`${styles.btn} ${styles.btnGhost}`} style={{ fontSize: 13, padding: "6px 12px" }}>
             复制前一天
           </button>
-          <span style={{ fontSize: 11, color: "#9a9a93" }}>仅在未来 14 天内生效</span>
+          <span style={{ fontSize: 11, color: "#9a9a93" }}>仅在未来 14 天内生效，再次点击可撤销</span>
         </div>
 
         {loading ? (

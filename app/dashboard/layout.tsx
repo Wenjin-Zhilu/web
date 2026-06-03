@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { parentAuthClient, mentorAuthClient } from "@/lib/auth-client";
 import { Sidebar } from "./_components/Sidebar";
 import UpcomingCallModal from "./_components/UpcomingCallModal";
+import PendingInquiryModal from "./_components/PendingInquiryModal";
+import PendingPaymentModal from "./_components/PendingPaymentModal";
 import styles from "./dashboard.module.css";
 import WeChatFloat from "../components/WeChatFloat";
 
@@ -42,6 +44,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </div>
       <WeChatFloat accent={accent} />
       <UpcomingCallModal />
+      <PendingInquiryModal />
+      <PendingPaymentModal />
     </div>
   );
 }
