@@ -11,6 +11,7 @@ type Inquiry = {
   id: string;
   role: "parent" | "mentor";
   counterpartName: string | null;
+  counterpartSchool: string | null;
   topic: string | null;
   status: "pending" | "accepted" | "declined" | "expired" | "cancelled";
   durationMins: number;
@@ -101,6 +102,7 @@ export default function InquiriesPage() {
                 >
                   <h3 className={styles.cardTitle}>
                     {role === "mentor" ? "家长" : "学长"}：{inq.counterpartName || "对方"}
+                    {inq.counterpartSchool ? ` · ${inq.counterpartSchool}` : ""}
                   </h3>
                   <span className={`${styles.pill} ${styles.pillNeutral}`}>
                     {STATUS_LABEL[inq.status]}

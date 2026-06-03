@@ -8,6 +8,17 @@ export class ApiError extends Error {
   }
 }
 
+// 学长/家长两套登录态跨子域共享，后端默认优先认家长。
+// 在学长子域发请求时带上 x-auth-side，让后端先认学长，避免身份被家长会话冒领。
+function authSideHeaders(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  const host = window.location.host;
+  if (host.startsWith("mentor.") || host.startsWith("admin.")) {
+    return { "x-auth-side": "mentor" };
+  }
+  return {};
+}
+
 export async function api<T = unknown>(
   path: string,
   init: RequestInit = {}
@@ -17,6 +28,7 @@ export async function api<T = unknown>(
     ...init,
     headers: {
       "content-type": "application/json",
+      ...authSideHeaders(),
       ...(init.headers || {}),
     },
   });
