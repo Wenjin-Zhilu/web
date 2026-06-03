@@ -4,7 +4,13 @@ import { useState } from "react";
 import Image from "next/image";
 import styles from "./WeChatFloat.module.css";
 
-export default function WeChatFloat({ accent = "#b8472d" }: { accent?: string }) {
+export default function WeChatFloat({
+  accent = "#b8472d",
+  qr = "/wechat-qr.jpg",
+}: {
+  accent?: string;
+  qr?: string;
+}) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -17,7 +23,7 @@ export default function WeChatFloat({ accent = "#b8472d" }: { accent?: string })
         <div className={styles.card}>
           <Image
             className={styles.qr}
-            src="/wechat-qr.jpg"
+            src={qr}
             alt="问津企业微信二维码"
             width={240}
             height={240}

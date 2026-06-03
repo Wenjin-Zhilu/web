@@ -343,7 +343,7 @@ export default function Home() {
         </section>
       </main>
 
-      <WeChatFloat accent="#b8472d" />
+      <WeChatFloat accent="#b8472d" qr="/wechat-qr-parent.jpg" />
 
       <footer className={styles.footer} id="about">
         <div className={styles.footerTop}>

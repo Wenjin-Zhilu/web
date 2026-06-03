@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { apiGet, apiSend, ApiError } from "@/lib/api";
 import styles from "../dashboard/dashboard.module.css";
-import WeChatFloat from "../components/WeChatFloat";
 
 type Authed = boolean | null;
 
@@ -63,7 +62,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         >
           {children}
         </div>
-        <WeChatFloat accent="#1a1a1a" />
       </div>
     </AdminCtx.Provider>
   );
