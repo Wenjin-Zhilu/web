@@ -4,6 +4,7 @@ import Link from "next/link";
 import dashStyles from "../../../dashboard.module.css";
 import styles from "./page.module.css";
 import { apiGet } from "@/lib/api";
+import { renderInlineMd } from "@/lib/inline-md";
 import { DIM_HINTS } from "../../mock-data";
 import type { Review, CollegeData } from "../../mock-data";
 
@@ -106,7 +107,7 @@ export default function CollegePage({
       {college.aiSummary && (
         <div className={styles.aiBlock}>
           <span className={styles.aiTag}>AI 综合摘要</span>
-          <p className={styles.aiText}>{college.aiSummary}</p>
+          <p className={styles.aiText}>{renderInlineMd(college.aiSummary)}</p>
         </div>
       )}
 

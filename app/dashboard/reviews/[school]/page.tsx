@@ -4,6 +4,7 @@ import Link from "next/link";
 import dashStyles from "../../dashboard.module.css";
 import styles from "./page.module.css";
 import { apiGet } from "@/lib/api";
+import { renderInlineMd } from "@/lib/inline-md";
 import type { SchoolData } from "../mock-data";
 
 export default function SchoolPage({
@@ -78,7 +79,7 @@ export default function SchoolPage({
                 {college.majors.join(" · ")}
               </div>
               {college.aiSummary && (
-                <p className={styles.collegeCardSummary}>{college.aiSummary}</p>
+                <p className={styles.collegeCardSummary}>{renderInlineMd(college.aiSummary)}</p>
               )}
             </div>
             <div className={styles.collegeCardRight}>
