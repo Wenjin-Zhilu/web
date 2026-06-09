@@ -9,6 +9,16 @@ function getSafeLocalRedirect(value: string | null) {
   return value;
 }
 
+// 仅判断 better-auth 会话 cookie 是否存在（不做网络/数据库校验）。
+// cookie 名为 `<prefix>.session_token`，生产 HTTPS 下带 `__Secure-`/`__Host-` 前缀，
+// 这里用后缀匹配把这几种情况全覆盖，避免漏判把已登录用户踢去登录。
+function hasSessionCookie(request: NextRequest, prefix: string) {
+  const suffix = `${prefix}.session_token`;
+  return request.cookies
+    .getAll()
+    .some((c) => c.name === suffix || c.name.endsWith(`-${suffix}`));
+}
+
 function getPublicOrigin(request: NextRequest) {
   const host =
     request.headers.get("x-forwarded-host") ||
@@ -87,18 +97,30 @@ export async function proxy(request: NextRequest) {
   const isAuthPage = pathname.startsWith("/auth");
 
   if (isProtected || isAuthPage) {
-    let isLoggedIn = false;
     const roleParam = request.nextUrl.searchParams.get("role");
     const isMentorContext = host === "mentor.wenjin-zhilu.com" || roleParam === "mentor";
 
-    let sessionEndpoints: string[];
-    if (isAuthPage) {
-      sessionEndpoints = [isMentorContext ? "/api/mauth/get-session" : "/api/auth/get-session"];
-    } else {
-      sessionEndpoints = ["/api/auth/get-session", "/api/mauth/get-session"];
+    // 受保护路由：只乐观判断会话 cookie 是否存在，不发网络请求。
+    // 之前这里对 publicOrigin 发 /api/auth/get-session（经 Cloudflare 兜一圈，
+    // 每次导航 ~0.6s）；Next.js 又会把列表/详情页里每个 <Link> 预取一遍，
+    // 并发自检一旦超时/失败，就把已登录用户误判为未登录、踢回 /auth 重新登录。
+    // 真正的会话校验仍在后端 requireAuth 和前端 DashboardLayout 里完成。
+    if (isProtected) {
+      const loggedIn =
+        hasSessionCookie(request, "ba-parent") || hasSessionCookie(request, "ba-mentor");
+      if (!loggedIn) {
+        const url = new URL("/auth", publicOrigin);
+        url.searchParams.set("mode", "login");
+        url.searchParams.set("redirect", `${request.nextUrl.pathname}${request.nextUrl.search}`);
+        return NextResponse.redirect(url);
+      }
     }
 
-    for (const endpoint of sessionEndpoints) {
+    // 登录页：只有"确实已登录"才跳走，避免 cookie 过期时在 /auth ⇄ /dashboard 间死循环。
+    // 这里需要真实校验，但失败也无害（顶多让用户停在 /auth 上）。
+    if (isAuthPage) {
+      const endpoint = isMentorContext ? "/api/mauth/get-session" : "/api/auth/get-session";
+      let isLoggedIn = false;
       try {
         const sessionRes = await fetch(new URL(endpoint, publicOrigin), {
           headers: { cookie: request.headers.get("cookie") || "" },
@@ -106,24 +128,13 @@ export async function proxy(request: NextRequest) {
         });
         if (sessionRes.ok) {
           const data = await sessionRes.json();
-          if (data?.user) { isLoggedIn = true; break; }
+          if (data?.user) isLoggedIn = true;
         }
       } catch {}
-    }
-
-    // Protected routes: redirect to /auth if not logged in
-    if (isProtected && !isLoggedIn) {
-      const url = new URL("/auth", publicOrigin);
-      url.searchParams.set("mode", "login");
-      url.searchParams.set("redirect", `${request.nextUrl.pathname}${request.nextUrl.search}`);
-      return NextResponse.redirect(url);
-    }
-
-    // Auth pages: redirect to the intended local destination if already logged in
-    if (isAuthPage && isLoggedIn) {
-      const redirectTo = getSafeLocalRedirect(request.nextUrl.searchParams.get("redirect")) || "/dashboard";
-      const url = new URL(redirectTo, publicOrigin);
-      return NextResponse.redirect(url);
+      if (isLoggedIn) {
+        const redirectTo = getSafeLocalRedirect(request.nextUrl.searchParams.get("redirect")) || "/dashboard";
+        return NextResponse.redirect(new URL(redirectTo, publicOrigin));
+      }
     }
   }
 
