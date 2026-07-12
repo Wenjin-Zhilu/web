@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { apiGet, apiSend, ApiError } from "@/lib/api";
-import { useSession } from "@/lib/auth-client";
+import { useSession, signOutAll } from "@/lib/auth-client";
 import { mergeIntroCard, type IntroCard } from "@/lib/intro-card-schema";
 import {
   Step1Basic,
@@ -65,10 +66,146 @@ export default function ProfilePage() {
 
   if (!me) return <div style={{ padding: 32, color: "#6e6e68" }}>加载中…</div>;
 
-  return me.user.role === "mentor" ? (
-    <MentorProfileEditor profile={me.mentorProfile ?? null} userName={me.user.name} />
-  ) : (
-    <ParentProfileView profile={me.parentProfile ?? null} />
+  return (
+    <>
+      {me.user.role === "mentor" ? (
+        <MentorProfileEditor profile={me.mentorProfile ?? null} userName={me.user.name} />
+      ) : (
+        <ParentProfileView profile={me.parentProfile ?? null} />
+      )}
+      <DeleteAccountSection />
+    </>
+  );
+}
+
+// ── 危险区域：注销账号 ─────────────────────────────────────────────────
+function DeleteAccountSection() {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const confirmDelete = async () => {
+    setBusy(true);
+    setErr(null);
+    try {
+      await apiSend("/api/me", "DELETE");
+      await signOutAll();
+      router.replace("/");
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : "注销失败，请稍后重试");
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div
+      style={{
+        marginTop: 32,
+        padding: "20px 22px",
+        border: "1px solid #f0cfc2",
+        background: "#fdf6f3",
+        borderRadius: 10,
+      }}
+    >
+      <p style={{ fontSize: 15, fontWeight: 600, color: "#a4391a", margin: "0 0 6px" }}>
+        危险区域
+      </p>
+      <p style={{ fontSize: 13.5, lineHeight: 1.7, color: "#6e6e68", margin: "0 0 14px" }}>
+        注销后账号将被停用且无法再次登录。相关个人资料将不再对外展示，涉及交易与法律要求需保留的记录会依规留存。此操作不可撤销。
+      </p>
+      <button
+        onClick={() => setOpen(true)}
+        style={{
+          padding: "8px 16px",
+          borderRadius: 7,
+          fontSize: 13,
+          fontWeight: 500,
+          fontFamily: "inherit",
+          cursor: "pointer",
+          color: "#c0392b",
+          background: "#ffffff",
+          border: "1px solid #e2a99b",
+        }}
+      >
+        注销账号
+      </button>
+
+      {open && (
+        <div
+          onClick={() => !busy && setOpen(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(31,31,31,0.45)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 20,
+            zIndex: 1000,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "#ffffff",
+              borderRadius: 12,
+              padding: "24px 24px 20px",
+              maxWidth: 400,
+              width: "100%",
+              boxShadow: "0 12px 40px rgba(0,0,0,0.18)",
+            }}
+          >
+            <p style={{ fontSize: 17, fontWeight: 700, color: "#1f1f1f", margin: "0 0 10px" }}>
+              确认注销账号？
+            </p>
+            <p style={{ fontSize: 14, lineHeight: 1.75, color: "#4a4842", margin: "0 0 18px" }}>
+              账号将被停用且<strong>无法再次登录</strong>。请确认你已处理好进行中的咨询与钱包余额。此操作不可撤销。
+            </p>
+            {err && (
+              <p style={{ fontSize: 13, color: "#c0392b", margin: "0 0 12px" }}>{err}</p>
+            )}
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+              <button
+                onClick={() => setOpen(false)}
+                disabled={busy}
+                style={{
+                  padding: "8px 16px",
+                  borderRadius: 7,
+                  fontSize: 13,
+                  fontWeight: 500,
+                  fontFamily: "inherit",
+                  cursor: busy ? "not-allowed" : "pointer",
+                  color: "#1f1f1f",
+                  background: "#ffffff",
+                  border: "1px solid #e0dfd8",
+                }}
+              >
+                取消
+              </button>
+              <button
+                onClick={confirmDelete}
+                disabled={busy}
+                style={{
+                  padding: "8px 16px",
+                  borderRadius: 7,
+                  fontSize: 13,
+                  fontWeight: 600,
+                  fontFamily: "inherit",
+                  cursor: busy ? "not-allowed" : "pointer",
+                  color: "#ffffff",
+                  background: "#c0392b",
+                  border: "1px solid #c0392b",
+                  opacity: busy ? 0.6 : 1,
+                }}
+              >
+                {busy ? "注销中…" : "确认注销"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
